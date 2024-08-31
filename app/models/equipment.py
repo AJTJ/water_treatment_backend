@@ -1,16 +1,20 @@
-from sqlalchemy import Column, Integer, String
 from pydantic import BaseModel
-from app.services.database import Base
+from typing import Optional
+import uuid
 
 
-class Equipment(Base):
-    __tablename__ = "equipment"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    qr_code_link = Column(String, nullable=True)
-
-
-class EquipmentCreate(BaseModel):
+class EquipmentBase(BaseModel):
     name: str
-    qr_code_link: str
+    qr_code_uuid: Optional[uuid.UUID] = None
+
+
+class EquipmentCreate(EquipmentBase):
+    pass
+
+
+class EquipmentUpdate(EquipmentBase):
+    pass
+
+
+class EquipmentResponse(EquipmentBase):
+    id: int
