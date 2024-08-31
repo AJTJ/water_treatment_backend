@@ -1,26 +1,20 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship, Mapped
+import uuid
 from pydantic import BaseModel
-from datetime import datetime
 from typing import Optional
-from app.models.equipment import Equipment
-from app.services.database import Base
 
 
-class EquipmentRequest(Base):
-    __tablename__ = "equipment_request"
-
-    id = Column(Integer, primary_key=True, index=True)
-    equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False)
-    request_date = Column(DateTime, default=datetime.now, nullable=False)
-    description = Column(String, nullable=True)
-
-    equipment: Mapped["Equipment"] = relationship(
-        "Equipment", back_populates="equipment_request"
-    )
-
-
-# Pydantic model for validation
-class EquipmentRequestCreate(BaseModel):
-    equipment_id: int
+class EquipmentRequestBase(BaseModel):
     description: Optional[str] = None
+    equipment_id: uuid.UUID
+
+
+class EquipmentRequestCreate(EquipmentRequestBase):
+    pass
+
+
+class EquipmentRequestUpdate(EquipmentRequestBase):
+    pass
+
+
+class EquipmentRequestResponse(EquipmentRequestBase):
+    id: uuid.UUID

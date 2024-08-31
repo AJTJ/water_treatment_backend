@@ -1,15 +1,18 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped
-from pydantic import BaseModel
 from app.services.database import Base
-import uuid
+from .equipment import Equipment
 
 
 class QRCode(Base):
     __tablename__ = "qr_code"
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, nullable=False)
+    batch_number = Column(Integer, nullable=False)
     full_url = Column(String, nullable=False)
+    is_archived = Column(Boolean, default=False)
 
-    equipment: Mapped["Equipment"] = relationship("Equipment", back_populates="qr_code")
+    equipment_id = Column(UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=True)
+
+    equipment: Mapped[Equipment] = relationship("Equipment", back_populates="qr_code")

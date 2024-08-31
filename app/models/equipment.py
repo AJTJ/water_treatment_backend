@@ -17,4 +17,4 @@ class EquipmentUpdate(EquipmentBase):
 
 
 class EquipmentResponse(EquipmentBase):
-    id: int
+    id: uuid.UUID
