@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13  # PostgreSQL version
+    container_name: water_treatment_db
+    environment:
+      POSTGRES_USER: water_treatment_user
+      POSTGRES_PASSWORD: water_treatment_pass
+      POSTGRES_DB: water_treatment_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+# to remove the volume add the -v
+# docker-compose down -v
+
+# the -d is for detached mode
+# docker-compose up -d
