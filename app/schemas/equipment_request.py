@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped
 from datetime import datetime
@@ -15,7 +15,9 @@ class EquipmentRequest(Base):
     description = Column(String, nullable=True)
     is_archived = Column(Boolean, default=False)
 
-    equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False)
+    equipment_id = Column(
+        UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=False
+    )
 
     equipment: Mapped[Equipment] = relationship(
         "Equipment", back_populates="equipment_request"

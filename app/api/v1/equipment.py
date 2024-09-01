@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
-from datetime import datetime, timezone
 
-from app.schemas.equipment import Equipment  # SQLAlchemy model
+from app.schemas.equipment import Equipment, EquipmentStatus  # SQLAlchemy model
 from app.models.equipment import (
     EquipmentCreate,
     EquipmentResponse,
@@ -27,12 +26,12 @@ def create_equipment(
 
 
 @router.get("/", response_model=List[EquipmentResponse])
-def read_equipments(
+def get_all_equipments(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> List[EquipmentResponse]:
     equipments = (
         db.query(Equipment)
-        .filter(Equipment.is_archived == False)
+        .filter(Equipment.status == EquipmentStatus.ACTIVE)
         .offset(skip)
         .limit(limit)
         .all()
@@ -41,12 +40,14 @@ def read_equipments(
 
 
 @router.get("/{equipment_id}", response_model=EquipmentResponse)
-def read_equipment(
+def get_equipment(
     equipment_id: UUID, db: Session = Depends(get_session)
 ) -> EquipmentResponse:
     equipment = (
         db.query(Equipment)
-        .filter(Equipment.id == equipment_id, Equipment.is_archived == False)
+        .filter(
+            Equipment.id == equipment_id, Equipment.status == EquipmentStatus.ACTIVE
+        )
         .first()
     )
     if equipment is None:
@@ -64,7 +65,9 @@ def update_equipment(
 ) -> EquipmentResponse:
     equipment = (
         db.query(Equipment)
-        .filter(Equipment.id == equipment_id, Equipment.is_archived == False)
+        .filter(
+            Equipment.id == equipment_id, Equipment.status == EquipmentStatus.ACTIVE
+        )
         .first()
     )
     if equipment is None:
@@ -74,7 +77,6 @@ def update_equipment(
 
     for key, value in equipment_update.model_dump(exclude_unset=True).items():
         setattr(equipment, key, value)
-    equipment.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(equipment)
     return EquipmentResponse.model_validate(equipment)
@@ -86,7 +88,9 @@ def delete_equipment(
 ) -> EquipmentResponse:
     equipment = (
         db.query(Equipment)
-        .filter(Equipment.id == equipment_id, Equipment.is_archived == False)
+        .filter(
+            Equipment.id == equipment_id, Equipment.status == EquipmentStatus.ACTIVE
+        )
         .first()
     )
     if equipment is None:
@@ -94,6 +98,6 @@ def delete_equipment(
             status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found"
         )
 
-    equipment.is_archived = True
+    equipment.status = EquipmentStatus.ARCHIVED
     db.commit()
     return EquipmentResponse.model_validate(equipment)

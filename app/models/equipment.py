@@ -18,3 +18,4 @@ class EquipmentUpdate(EquipmentBase):
 
 class EquipmentResponse(EquipmentBase):
     id: uuid.UUID
+    status: str

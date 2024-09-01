@@ -2,7 +2,8 @@ from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped
 from app.services.database import Base
-from .equipment import Equipment
+
+from app.schemas import equipment
 
 
 class QRCode(Base):
@@ -15,4 +16,6 @@ class QRCode(Base):
 
     equipment_id = Column(UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=True)
 
-    equipment: Mapped[Equipment] = relationship("Equipment", back_populates="qr_code")
+    equipment: Mapped["equipment.Equipment"] = relationship(
+        "Equipment", back_populates="qr_code"
+    )

@@ -1,10 +1,16 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, DateTime, Text, Boolean
+from sqlalchemy import Column, String, ForeignKey, DateTime, Text, Enum
 from datetime import datetime, timezone
 from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.dialects.postgresql import UUID
+from app.schemas import qr_code
 from app.services.database import Base
-from .qr_code import QRCode
+from enum import Enum as PyEnum
+
+
+class EquipmentStatus(PyEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
 
 
 class Equipment(Base):
@@ -21,8 +27,17 @@ class Equipment(Base):
     )
     description = Column(Text, nullable=True)
     location = Column(String, nullable=True)
-    is_archived = Column(Boolean, default=False)
+    status = Column(
+        Enum(
+            EquipmentStatus,
+            native_enum=False,
+        ),
+        default=EquipmentStatus.ACTIVE,
+        nullable=False,
+    )
 
     qr_code_id = Column(UUID(as_uuid=True), ForeignKey("qr_code.id"), nullable=True)
 
-    qr_code: Mapped[QRCode] = relationship("QRCode", back_populates="equipment")
+    qr_code: Mapped["qr_code.QRCode"] = relationship(
+        "QRCode", back_populates="equipment"
+    )
