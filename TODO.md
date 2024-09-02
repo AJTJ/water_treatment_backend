@@ -1,0 +1,1 @@
+- Set the domain in QR code generation

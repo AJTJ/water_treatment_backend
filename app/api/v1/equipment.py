@@ -101,3 +101,32 @@ def delete_equipment(
     equipment.status = EquipmentStatus.ARCHIVED
     db.commit()
     return EquipmentResponse.model_validate(equipment)
+
+
+# app/schemas/qr_code.py
+
+# import uuid
+# from sqlalchemy import String, Integer, Enum
+# from sqlalchemy.dialects.postgresql import UUID
+# from sqlalchemy.orm import Mapped, mapped_column, relationship
+# from app.services.database import Base
+# from enum import Enum as PyEnum
+
+# class QRCodeStatus(PyEnum):
+#     ACTIVE = "active"
+#     ARCHIVED = "archived"
+
+# class QRCode(Base):
+#     __tablename__ = "qr_code"
+
+#     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+#     batch_number: Mapped[int] = mapped_column(Integer, nullable=True)
+#     full_url: Mapped[str] = mapped_column(String, nullable=False)
+#     status: Mapped[QRCodeStatus] = mapped_column(
+#         Enum(QRCodeStatus, native_enum=False),
+#         default=QRCodeStatus.ACTIVE,
+#         nullable=False,
+#     )
+#     equipment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=True)
+
+#     equipment: Mapped["Equipment"] = relationship("Equipment", back_populates="qr_code")
