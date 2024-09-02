@@ -14,6 +14,7 @@ from app.models.equipment_request import (
     EquipmentRequestUpdate,
 )  # Pydantic models
 from app.services.database import get_session
+from app.services.google_sheets import sync_to_google_sheet
 
 router = APIRouter()
 
@@ -28,6 +29,13 @@ def create_equipment_request(
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
+
+    try:
+        sync_to_google_sheet(equipment_request)
+    except Exception as e:
+        print(f"Failed to sync to Google Sheets: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     return EquipmentRequestResponse.model_validate(db_request)
 
 

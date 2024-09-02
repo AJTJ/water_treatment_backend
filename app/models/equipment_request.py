@@ -10,6 +10,7 @@ class EquipmentRequestBase(BaseModel):
     equipment_id: uuid.UUID
     description: Optional[str] = None
     request_date: datetime
+    status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
 
 
 class EquipmentRequestCreate(EquipmentRequestBase):
@@ -22,5 +23,4 @@ class EquipmentRequestUpdate(EquipmentRequestBase):
 
 class EquipmentRequestResponse(EquipmentRequestBase):
     id: uuid.UUID
-    status: EquipmentRequestStatus
     updated_at: datetime
