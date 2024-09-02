@@ -177,7 +177,6 @@ def associate_qr_code_with_equipment(
 def handle_qr_code_scan(
     qr_code_id: UUID, db: Session = Depends(get_session)
 ) -> QRCodeResponse:
-    # Look up the QR code by its ID
     qr_code = db.query(QRCode).filter(QRCode.id == qr_code_id).first()
 
     if not qr_code:

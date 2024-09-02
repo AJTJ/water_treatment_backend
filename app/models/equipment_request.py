@@ -8,6 +8,7 @@ from app.schemas.equipment_request import EquipmentRequestStatus
 
 class EquipmentRequestBase(BaseModel):
     id: uuid.UUID
+    equipment_id: uuid.UUID
     description: Optional[str] = None
     request_date: datetime
     status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
@@ -27,6 +28,4 @@ class EquipmentRequestResponse(EquipmentRequestBase):
 
 
 class EquipmentRequestWithEquipmentInfo(EquipmentRequestBase):
-    equipment_id: uuid.UUID
     equipment_name: str
-    image_url: Optional[str] = None

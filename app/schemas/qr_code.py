@@ -27,7 +27,9 @@ class QRCode(Base):
     )
 
     equipment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", name="fk_qr_code_equipment_id"),
+        nullable=True,
     )
 
     equipment: Mapped["equipment.Equipment"] = relationship(

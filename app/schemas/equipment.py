@@ -40,17 +40,11 @@ class Equipment(Base):
         default=EquipmentStatus.ACTIVE,
         nullable=False,
     )
-    # status = mapped_column(
-    #     Enum(
-    #         EquipmentStatus,
-    #         native_enum=False,
-    #     ),
-    #     default=EquipmentStatus.ACTIVE,
-    #     nullable=False,
-    # )
 
     qr_code_id = mapped_column(
-        UUID(as_uuid=True), ForeignKey("qr_code.id"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("qr_code.id", name="fk_equipment_qr_code_id"),
+        nullable=True,
     )
 
     qr_code: Mapped["qr_code.QRCode"] = relationship(

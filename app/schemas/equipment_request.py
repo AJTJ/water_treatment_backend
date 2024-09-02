@@ -38,7 +38,9 @@ class EquipmentRequest(Base):
     )
 
     equipment_id = mapped_column(
-        UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", name="fk_equipment_request_equipment_id"),
+        nullable=False,
     )
 
     equipment: Mapped[Equipment] = relationship(

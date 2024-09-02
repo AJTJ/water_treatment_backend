@@ -3,13 +3,15 @@ import os  # Add import statement for os module
 from typing import Any, Dict
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
+
 from googleapiclient.discovery import build  # type: ignore
-from app.models.equipment_request import (
-    EquipmentRequestWithEquipmentInfo,
-)
+
 from uuid import UUID
 from datetime import datetime
 import pytz
+from app.models.equipment_request import (
+    EquipmentRequestWithEquipmentInfo,
+)
 
 
 def format_date(request_date: datetime, timezone: str = "America/Whitehorse") -> str:

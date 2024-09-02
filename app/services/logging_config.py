@@ -24,3 +24,6 @@ LOGGING_CONFIG = {
 
 def setup_logging() -> None:
     logging.config.dictConfig(LOGGING_CONFIG)
+
+
+logger = logging.getLogger(__name__)
