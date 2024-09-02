@@ -7,10 +7,11 @@ from app.schemas.equipment_request import EquipmentRequestStatus
 
 
 class EquipmentRequestBase(BaseModel):
-    equipment_id: uuid.UUID
+    id: uuid.UUID
     description: Optional[str] = None
     request_date: datetime
     status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
+    image_url: Optional[str] = None
 
 
 class EquipmentRequestCreate(EquipmentRequestBase):
@@ -22,5 +23,10 @@ class EquipmentRequestUpdate(EquipmentRequestBase):
 
 
 class EquipmentRequestResponse(EquipmentRequestBase):
-    id: uuid.UUID
     updated_at: datetime
+
+
+class EquipmentRequestWithEquipmentInfo(EquipmentRequestBase):
+    equipment_id: uuid.UUID
+    equipment_name: str
+    image_url: Optional[str] = None

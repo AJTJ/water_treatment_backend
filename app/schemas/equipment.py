@@ -31,6 +31,7 @@ class Equipment(Base):
     )
     description = mapped_column(Text, nullable=True)
     location = mapped_column(String, nullable=True)
+    image_url = mapped_column(String, nullable=True)
     status = mapped_column(
         Enum(
             EquipmentStatus,

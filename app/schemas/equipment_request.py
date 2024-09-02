@@ -29,7 +29,7 @@ class EquipmentRequest(Base):
         default=EquipmentRequestStatus.ACTIVE,
         nullable=False,
     )
-
+    image_url = mapped_column(String, nullable=True)
     updated_at = mapped_column(
         DateTime,
         default=datetime.now(timezone.utc),
