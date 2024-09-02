@@ -24,7 +24,7 @@ from app.schemas.equipment_request import (
 )
 from app.services.database import get_session
 from app.services.google_sheets import sync_to_google_sheet
-from app.services.logging_config import logger
+from app.core.logging_config import logger
 
 router = APIRouter()
 

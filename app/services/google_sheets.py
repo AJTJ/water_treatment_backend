@@ -47,9 +47,9 @@ def sync_to_google_sheet(request_data: EquipmentRequestWithEquipmentInfo) -> Non
 
     values: list[list[str]] = [
         [
+            formatted_date,
             request_data.equipment_name,
             request_data.description or "",
-            formatted_date,
             request_data.image_url or "",
             str(request_data.id),
             str(request_data.equipment_id),

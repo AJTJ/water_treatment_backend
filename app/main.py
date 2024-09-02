@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response
 from app.api.v1 import equipment, equipment_request, qr_code
-from app.services.logging_config import setup_logging
+from app.core.logging_config import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Awaitable, Dict, Callable
 from fastapi.responses import JSONResponse

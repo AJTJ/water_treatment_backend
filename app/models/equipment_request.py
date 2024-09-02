@@ -3,15 +3,11 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-from app.schemas.equipment_request import EquipmentRequestStatus
-
 
 class EquipmentRequestBase(BaseModel):
-    id: uuid.UUID
     equipment_id: uuid.UUID
     description: Optional[str] = None
     request_date: datetime
-    status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
     image_url: Optional[str] = None
 
 
@@ -28,4 +24,5 @@ class EquipmentRequestResponse(EquipmentRequestBase):
 
 
 class EquipmentRequestWithEquipmentInfo(EquipmentRequestBase):
+    id: uuid.UUID
     equipment_name: str
