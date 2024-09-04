@@ -1,6 +1,9 @@
 # private things
 google_sheets_key.json
 
+# test things
+test_image.jpeg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

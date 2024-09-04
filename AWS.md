@@ -1,0 +1,11 @@
+s3
+- Set up a bucket
+  - Almost ALL default settings
+  - GET, HEAD is fine if all you're doing is serving files
+  - Domain config might change for custom domain
+- Set up cloudfront
+  - Cloudfront is useful because it can be set up for URL signing with long-term access
+  - Also, it's a CDN, so it will reduce latency with image sourcing
+- Set up IAM users
+  - One for dev and one for prod
+  - Give them permissions

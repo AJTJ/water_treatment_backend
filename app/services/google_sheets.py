@@ -6,7 +6,7 @@ from google.oauth2.service_account import Credentials
 
 from googleapiclient.discovery import build  # type: ignore
 
-from uuid import UUID
+# from uuid import UUID
 from datetime import datetime
 import pytz
 from app.models.equipment_request import (
@@ -74,16 +74,16 @@ def sync_to_google_sheet(request_data: EquipmentRequestWithEquipmentInfo) -> Non
     print(f"{updated_cells} cells updated.")
 
 
-request_data_example = EquipmentRequestWithEquipmentInfo(
-    request_date=datetime.now(),
-    equipment_name="Filter system",
-    description="Need new filter cartridges",
-    image_url="https://example.com/image.jpg",
-    id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-    equipment_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
-)
+# request_data_example = EquipmentRequestWithEquipmentInfo(
+#     request_date=datetime.now(),
+#     equipment_name="Filter system",
+#     description="Need new filter cartridges",
+#     image_url="https://example.com/image.jpg",
+#     id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+#     equipment_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
+# )
 
-sync_to_google_sheet(request_data_example)
+# sync_to_google_sheet(request_data_example)
 
 # TODO Upload the json file to EC2
 
