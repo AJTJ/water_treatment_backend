@@ -20,6 +20,21 @@ class Equipment(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     name = mapped_column(String, nullable=False)
+    description = mapped_column(Text, nullable=True)
+    model_number = mapped_column(String, nullable=True)
+    employee_name = mapped_column(String, nullable=True)
+    location = mapped_column(String, nullable=True)
+    image_url = mapped_column(String, nullable=True)
+
+    # Other data
+    status = mapped_column(
+        Enum(
+            EquipmentStatus,
+            native_enum=False,
+        ),
+        default=EquipmentStatus.ACTIVE,
+        nullable=False,
+    )
     created_at = mapped_column(
         DateTime, default=datetime.now(timezone.utc), nullable=False
     )
@@ -27,17 +42,6 @@ class Equipment(Base):
         DateTime,
         default=datetime.now(timezone.utc),
         onupdate=datetime.now(timezone.utc),
-        nullable=False,
-    )
-    description = mapped_column(Text, nullable=True)
-    location = mapped_column(String, nullable=True)
-    image_url = mapped_column(String, nullable=True)
-    status = mapped_column(
-        Enum(
-            EquipmentStatus,
-            native_enum=False,
-        ),
-        default=EquipmentStatus.ACTIVE,
         nullable=False,
     )
 

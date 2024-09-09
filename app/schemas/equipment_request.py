@@ -39,13 +39,11 @@ class EquipmentRequest(Base):
         onupdate=datetime.now(timezone.utc),
         nullable=False,
     )
-
     equipment_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("equipment.id", name="fk_equipment_request_equipment_id"),
         nullable=False,
     )
-
     equipment: Mapped["Equipment"] = relationship(
         "Equipment", back_populates="equipment_requests"
     )

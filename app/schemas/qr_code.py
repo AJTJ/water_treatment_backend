@@ -25,11 +25,9 @@ class QRCode(Base):
         default=QRCodeStatus.ACTIVE,
         nullable=False,
     )
-
     equipment_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("equipment.id", name="fk_qr_code_equipment_id"),
         nullable=False,
     )
-
     equipment: Mapped[Equipment] = relationship("Equipment")
