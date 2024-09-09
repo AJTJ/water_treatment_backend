@@ -1,9 +1,8 @@
 import uuid
-from sqlalchemy import String, ForeignKey, DateTime, Text, Enum
+from sqlalchemy import String, DateTime, Text, Enum
 from datetime import datetime, timezone
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import mapped_column
 from sqlalchemy.dialects.postgresql import UUID
-from app.schemas import qr_code
 from app.services.database import Base
 from enum import Enum as PyEnum
 
@@ -39,14 +38,4 @@ class Equipment(Base):
         ),
         default=EquipmentStatus.ACTIVE,
         nullable=False,
-    )
-
-    qr_code_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("qr_code.id", name="fk_equipment_qr_code_id"),
-        nullable=True,
-    )
-
-    qr_code: Mapped["qr_code.QRCode"] = relationship(
-        "QRCode", back_populates="equipment"
     )

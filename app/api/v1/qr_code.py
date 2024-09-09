@@ -170,24 +170,3 @@ def associate_qr_code_with_equipment(
     db.refresh(qr_code)
 
     return QRCodeResponse.model_validate(qr_code)
-
-
-# UNVERSIONED ENDPOINT
-@router.get("/qr_code/{qr_code_id}", response_model=QRCodeResponse)
-def handle_qr_code_scan(
-    qr_code_id: UUID, db: Session = Depends(get_session)
-) -> QRCodeResponse:
-    qr_code = db.query(QRCode).filter(QRCode.id == qr_code_id).first()
-
-    if not qr_code:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="QR Code not found"
-        )
-
-    if qr_code.status == QRCodeStatus.ARCHIVED:
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE, detail="QR Code is archived"
-        )
-
-    # Return the QR code details or redirect to a relevant URL
-    return QRCodeResponse.model_validate(qr_code)

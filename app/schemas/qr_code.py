@@ -2,7 +2,7 @@ from sqlalchemy import String, Integer, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.services.database import Base
-from app.schemas import equipment
+from app.schemas import Equipment
 from enum import Enum as PyEnum
 import uuid
 
@@ -26,12 +26,10 @@ class QRCode(Base):
         nullable=False,
     )
 
-    equipment_id: Mapped[uuid.UUID] = mapped_column(
+    equipment_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("equipment.id", name="fk_qr_code_equipment_id"),
-        nullable=True,
+        nullable=False,
     )
 
-    equipment: Mapped["equipment.Equipment"] = relationship(
-        "Equipment", back_populates="qr_code"
-    )
+    equipment: Mapped[Equipment] = relationship("Equipment", back_populates="qr_code")

@@ -1,15 +1,14 @@
 from fastapi import FastAPI, Request, Response
 from app.api.v1 import equipment, equipment_request, qr_code, s3_endpoints
+from app.api.unversioned_api import qr_code as qr_code_unversioned
 from app.core.logging_config import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Awaitable, Dict, Callable
 from fastapi.responses import JSONResponse
 
-
 setup_logging()
 
 app: FastAPI = FastAPI(title="Water Treatment API", version="1.0")
-
 
 # Versioned endpoints
 app.include_router(equipment.router, prefix="/v1/equipment", tags=["equipment"])
@@ -20,7 +19,7 @@ app.include_router(qr_code.router, prefix="/v1/qr_code", tags=["qr_code"])
 app.include_router(s3_endpoints.router, prefix="/api/v1/s3", tags=["S3"])
 
 # Unversioned endpoints (no prefix)
-app.include_router(qr_code.router, tags=["qr_code"])
+app.include_router(qr_code_unversioned.router, tags=["qr_code_unversioned"])
 
 # Middleware for handling CORS
 app.add_middleware(

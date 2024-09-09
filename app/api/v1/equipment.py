@@ -29,14 +29,20 @@ def create_equipment(
 def get_all_equipments(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> List[EquipmentResponse]:
-    equipments = (
-        db.query(Equipment)
-        .filter(Equipment.status == EquipmentStatus.ACTIVE)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-    return [EquipmentResponse.model_validate(eq) for eq in equipments]
+    print("all equipment")
+    try:
+        equipments = (
+            db.query(Equipment)
+            .filter(Equipment.status == EquipmentStatus.ACTIVE)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        print(equipments)
+        return [EquipmentResponse.model_validate(eq) for eq in equipments]
+    except Exception as e:
+        print(f"Error retrieving equipment: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.get("/{equipment_id}", response_model=EquipmentResponse)
@@ -63,6 +69,7 @@ def update_equipment(
     equipment_update: EquipmentUpdate,
     db: Session = Depends(get_session),
 ) -> EquipmentResponse:
+
     equipment = (
         db.query(Equipment)
         .filter(
