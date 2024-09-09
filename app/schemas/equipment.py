@@ -1,10 +1,11 @@
 import uuid
 from sqlalchemy import String, DateTime, Text, Enum
 from datetime import datetime, timezone
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.services.database import Base
 from enum import Enum as PyEnum
+from .equipment_request import EquipmentRequest
 
 
 class EquipmentStatus(PyEnum):
@@ -38,4 +39,8 @@ class Equipment(Base):
         ),
         default=EquipmentStatus.ACTIVE,
         nullable=False,
+    )
+
+    equipment_requests: Mapped[list["EquipmentRequest"]] = relationship(
+        "EquipmentRequest", back_populates="equipment"
     )

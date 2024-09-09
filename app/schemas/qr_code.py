@@ -32,4 +32,4 @@ class QRCode(Base):
         nullable=False,
     )
 
-    equipment: Mapped[Equipment] = relationship("Equipment", back_populates="qr_code")
+    equipment: Mapped[Equipment] = relationship("Equipment")
