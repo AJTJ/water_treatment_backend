@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from typing import Dict
 
 
-def test_get_all_equipments(test_client: TestClient) -> None:
+def test_get_many_equipment(test_client: TestClient) -> None:
     response = test_client.get("/v1/equipment/")
     assert response.status_code == 200
     assert isinstance(response.json(), list)

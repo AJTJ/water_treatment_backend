@@ -65,7 +65,7 @@ def create_batch_qr_codes(
 
 
 @router.get("/", response_model=List[QRCodeResponse])
-def get_all_qr_codes(
+def get_many_qr_codes(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> List[QRCodeResponse]:
     qr_codes = (

@@ -100,7 +100,7 @@ def retry_failed_syncs(db: Session = Depends(get_session)) -> None:
 
 
 @router.get("/", response_model=List[EquipmentRequestResponse])
-def get_all_equipment_requests(
+def get_many_equipment_requests(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> List[EquipmentRequestResponse]:
     requests = (

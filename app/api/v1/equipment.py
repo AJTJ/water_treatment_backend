@@ -26,7 +26,7 @@ def create_equipment(
 
 
 @router.get("/", response_model=List[EquipmentResponse])
-def get_all_equipments(
+def get_many_equipment(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> List[EquipmentResponse]:
     print("all equipment")

@@ -7,9 +7,10 @@ from app.schemas.qr_code import QRCodeStatus
 
 class QRCodeBase(BaseModel):
     id: uuid.UUID
-    full_url: str
     batch_number: int
-    status: QRCodeStatus = QRCodeStatus.ACTIVE
+    full_url: str
+    status: QRCodeStatus
+    equipment_id: Optional[uuid.UUID]
 
 
 class QRCodeCreate(QRCodeBase):
@@ -21,8 +22,7 @@ class QRCodeUpdate(QRCodeBase):
 
 
 class QRCodeResponse(QRCodeBase):
-    id: uuid.UUID
-    equipment_id: Optional[uuid.UUID] = None
+    pass
 
 
 class QRCodeAssociation(BaseModel):

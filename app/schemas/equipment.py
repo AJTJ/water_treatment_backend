@@ -21,12 +21,10 @@ class Equipment(Base):
     )
     name = mapped_column(String, nullable=False)
     description = mapped_column(Text, nullable=True)
-    model_number = mapped_column(String, nullable=True)
-    employee_name = mapped_column(String, nullable=True)
+    equipment_model_number = mapped_column(String, nullable=True)
     location = mapped_column(String, nullable=True)
     image_url = mapped_column(String, nullable=True)
 
-    # Other data
     status = mapped_column(
         Enum(
             EquipmentStatus,

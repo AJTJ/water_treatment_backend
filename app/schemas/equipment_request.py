@@ -22,7 +22,6 @@ class EquipmentRequest(Base):
     id = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
-    request_date = mapped_column(DateTime, default=datetime.now, nullable=False)
     description = mapped_column(String, nullable=True)
     status = mapped_column(
         Enum(
@@ -33,6 +32,8 @@ class EquipmentRequest(Base):
         nullable=False,
     )
     image_url = mapped_column(String, nullable=True)
+    employee_name = mapped_column(String, nullable=True)
+    created_at = mapped_column(DateTime, default=datetime.now, nullable=False)
     updated_at = mapped_column(
         DateTime,
         default=datetime.now(timezone.utc),

@@ -41,9 +41,7 @@ def sync_to_google_sheet(request_data: EquipmentRequestWithEquipmentInfo) -> Non
     spreadsheet_id: str = "1FN2Ua__1dRYFCtMvBX2n-qwKIzyXWAq1dii5CmIPUrM"
     range_name: str = "Sheet1!A1:D1"  # Adjust the range as necessary
 
-    formatted_date = format_date(
-        request_data.request_date, timezone="America/Whitehorse"
-    )
+    formatted_date = format_date(request_data.created_at, timezone="America/Whitehorse")
 
     values: list[list[str]] = [
         [
