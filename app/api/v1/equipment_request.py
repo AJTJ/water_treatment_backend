@@ -4,8 +4,10 @@ from typing import List
 from uuid import UUID
 from datetime import datetime, timezone
 from tenacity import retry, stop_after_attempt, wait_exponential
-
 from app.api.v1.equipment import get_equipment
+from app.services.database import get_session
+from app.services.google_sheets import sync_to_google_sheet
+from app.core.logging_config import logger
 
 # Models
 from app.models.equipment_request import (
@@ -13,6 +15,8 @@ from app.models.equipment_request import (
     EquipmentRequestResponse,
     EquipmentRequestUpdate,
     EquipmentRequestWithEquipmentInfo,
+    ManyEquipmentRequestsResponse,
+    EquipmentRequestBase,
 )
 from app.models.failed_sync import FailedSyncCreate
 
@@ -22,9 +26,7 @@ from app.schemas.equipment_request import (
     EquipmentRequest,
     EquipmentRequestStatus,
 )
-from app.services.database import get_session
-from app.services.google_sheets import sync_to_google_sheet
-from app.core.logging_config import logger
+
 
 router = APIRouter()
 
@@ -99,10 +101,10 @@ def retry_failed_syncs(db: Session = Depends(get_session)) -> None:
             logger.error(f"Retry sync failed for {sync.equipment_request_id}: {e}")
 
 
-@router.get("/", response_model=List[EquipmentRequestResponse])
+@router.get("/", response_model=ManyEquipmentRequestsResponse)
 def get_many_equipment_requests(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
-) -> List[EquipmentRequestResponse]:
+) -> ManyEquipmentRequestsResponse:
     requests = (
         db.query(EquipmentRequest)
         .filter(EquipmentRequest.status == EquipmentRequestStatus.ACTIVE)
@@ -110,7 +112,19 @@ def get_many_equipment_requests(
         .limit(limit)
         .all()
     )
-    return [EquipmentRequestResponse.model_validate(req) for req in requests]
+
+    total = (
+        db.query(EquipmentRequest)
+        .filter(EquipmentRequest.status == EquipmentRequestStatus.ACTIVE)
+        .count()
+    )
+
+    return ManyEquipmentRequestsResponse(
+        total=total,
+        equipment_requests=[
+            EquipmentRequestBase.model_validate(req) for req in requests
+        ],
+    )
 
 
 @router.get("/{request_id}", response_model=EquipmentRequestResponse)

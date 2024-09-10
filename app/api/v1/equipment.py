@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
-
-from app.schemas.equipment import Equipment, EquipmentStatus  # SQLAlchemy model
+from app.schemas.equipment import Equipment, EquipmentStatus
 from app.models.equipment import (
+    EquipmentBase,
     EquipmentCreate,
     EquipmentResponse,
+    ManyEquipmentResponse,
     EquipmentUpdate,
-)  # Pydantic models
+)
 from app.services.database import get_session
 
 router = APIRouter()
@@ -25,11 +25,10 @@ def create_equipment(
     return EquipmentResponse.model_validate(db_equipment)
 
 
-@router.get("/", response_model=List[EquipmentResponse])
+@router.get("/", response_model=ManyEquipmentResponse)
 def get_many_equipment(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
-) -> List[EquipmentResponse]:
-    print("all equipment")
+) -> ManyEquipmentResponse:
     try:
         equipments = (
             db.query(Equipment)
@@ -38,8 +37,17 @@ def get_many_equipment(
             .limit(limit)
             .all()
         )
-        print(equipments)
-        return [EquipmentResponse.model_validate(eq) for eq in equipments]
+        count = (
+            db.query(Equipment)
+            .filter(Equipment.status == EquipmentStatus.ACTIVE)
+            .count()
+        )
+
+        return ManyEquipmentResponse(
+            total=count,
+            equipment=[EquipmentBase.model_validate(eq) for eq in equipments],
+        )
+
     except Exception as e:
         print(f"Error retrieving equipment: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -108,32 +116,3 @@ def delete_equipment(
     equipment.status = EquipmentStatus.ARCHIVED
     db.commit()
     return EquipmentResponse.model_validate(equipment)
-
-
-# app/schemas/qr_code.py
-
-# import uuid
-# from sqlalchemy import String, Integer, Enum
-# from sqlalchemy.dialects.postgresql import UUID
-# from sqlalchemy.orm import Mapped, mapped_column, relationship
-# from app.services.database import Base
-# from enum import Enum as PyEnum
-
-# class QRCodeStatus(PyEnum):
-#     ACTIVE = "active"
-#     ARCHIVED = "archived"
-
-# class QRCode(Base):
-#     __tablename__ = "qr_code"
-
-#     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-#     batch_number: Mapped[int] = mapped_column(Integer, nullable=True)
-#     full_url: Mapped[str] = mapped_column(String, nullable=False)
-#     status: Mapped[QRCodeStatus] = mapped_column(
-#         Enum(QRCodeStatus, native_enum=False),
-#         default=QRCodeStatus.ACTIVE,
-#         nullable=False,
-#     )
-#     equipment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("equipment.id"), nullable=True)
-
-#     equipment: Mapped["Equipment"] = relationship("Equipment", back_populates="qr_code")

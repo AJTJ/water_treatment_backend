@@ -13,17 +13,9 @@ class QRCodeBase(BaseModel):
     equipment_id: Optional[uuid.UUID]
 
 
-class QRCodeCreate(QRCodeBase):
-    pass
-
-
-class QRCodeUpdate(QRCodeBase):
-    pass
+class QRCodeUpdate(BaseModel):
+    equipment_id: Optional[uuid.UUID]
 
 
 class QRCodeResponse(QRCodeBase):
     pass
-
-
-class QRCodeAssociation(BaseModel):
-    equipment_id: uuid.UUID

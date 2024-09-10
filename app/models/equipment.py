@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 import uuid
 
 from app.schemas.equipment import EquipmentStatus
@@ -28,3 +28,8 @@ class EquipmentUpdate(EquipmentBase):
 
 class EquipmentResponse(EquipmentBase):
     pass
+
+
+class ManyEquipmentResponse(BaseModel):
+    total: int
+    equipment: List[EquipmentBase]
