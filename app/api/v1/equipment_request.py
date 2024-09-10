@@ -5,8 +5,8 @@ from uuid import UUID
 from datetime import datetime, timezone
 from tenacity import retry, stop_after_attempt, wait_exponential
 from app.api.v1.equipment import get_equipment
-from app.services.database import get_session
-from app.services.google_sheets import sync_to_google_sheet
+from app.services.database_service import get_session
+from app.services.google_sheets_service import sync_to_google_sheet
 from app.core.logging_config import logger
 
 # Models

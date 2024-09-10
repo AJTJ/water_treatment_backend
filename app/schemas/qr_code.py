@@ -1,7 +1,7 @@
 from sqlalchemy import String, Integer, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from app.services.database import Base
+from app.services.database_service import Base
 from app.schemas import Equipment
 from enum import Enum as PyEnum
 import uuid

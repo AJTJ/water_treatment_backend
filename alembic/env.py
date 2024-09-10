@@ -4,8 +4,8 @@ from sqlalchemy import pool
 from alembic import context
 from app.schemas import *  # Ensure all models are imported
 
-from app.services.database import Base  # Import the Base class
-from app.services.database import DATABASE_URL  # Import the DATABASE_URL
+from app.services.database_service import Base  # Import the Base class
+from app.services.database_service import DATABASE_URL  # Import the DATABASE_URL
 
 print("cat", Base.metadata.tables)
 

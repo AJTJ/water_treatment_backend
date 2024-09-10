@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Response
-from app.api.v1 import equipment, equipment_request, qr_code, s3_endpoints
+from app.api.v1 import auth, equipment, equipment_request, qr_code, s3_endpoints
 from app.api.unversioned_api import qr_code as qr_code_unversioned
 from app.core.logging_config import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +17,7 @@ app.include_router(
 )
 app.include_router(qr_code.router, prefix="/v1/qr_code", tags=["qr_code"])
 app.include_router(s3_endpoints.router, prefix="/api/v1/s3", tags=["S3"])
+app.include_router(auth.router, prefix="/v1/auth", tags=["auth"])
 
 # Unversioned endpoints (no prefix)
 app.include_router(qr_code_unversioned.router, tags=["qr_code_unversioned"])

@@ -5,7 +5,7 @@ from app.schemas.qr_code import QRCode, QRCodeStatus
 from app.models.qr_code import (
     QRCodeResponse,
 )
-from app.services.database import get_session
+from app.services.database_service import get_session
 
 router = APIRouter()
 

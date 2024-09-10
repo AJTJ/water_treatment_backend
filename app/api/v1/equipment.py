@@ -9,7 +9,7 @@ from app.models.equipment import (
     ManyEquipmentResponse,
     EquipmentUpdate,
 )
-from app.services.database import get_session
+from app.services.database_service import get_session
 
 router = APIRouter()
 

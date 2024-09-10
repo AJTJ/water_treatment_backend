@@ -3,7 +3,7 @@ from sqlalchemy import String, DateTime, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime, timezone
-from app.services.database import Base
+from app.services.database_service import Base
 import uuid
 from enum import Enum as PyEnum
 

@@ -10,7 +10,7 @@ from app.models.qr_code import (
     QRCodeResponse,
     QRCodeUpdate,
 )  # Pydantic models
-from app.services.database import get_session
+from app.services.database_service import get_session
 
 router = APIRouter()
 
