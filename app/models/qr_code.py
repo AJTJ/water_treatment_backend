@@ -17,5 +17,20 @@ class QRCodeUpdate(BaseModel):
     equipment_id: Optional[uuid.UUID]
 
 
-class QRCodeResponse(QRCodeBase):
-    pass
+class QRCodeResponseWithEquipment(QRCodeBase):
+    equipment_name: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class QRCodeResponse(BaseModel):
+    total: int
+    qr_codes: list[QRCodeResponseWithEquipment]
+
+
+class QRCodeQueryParams(BaseModel):
+    skip: int = 0
+    limit: int = 200
+    min_batch_number: Optional[int] = None
+    max_batch_number: Optional[int] = None

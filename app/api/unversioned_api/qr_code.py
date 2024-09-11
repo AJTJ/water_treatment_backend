@@ -3,17 +3,17 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 from app.schemas.qr_code import QRCode, QRCodeStatus
 from app.models.qr_code import (
-    QRCodeResponse,
+    QRCodeResponseWithEquipment,
 )
 from app.services.database_service import get_session
 
 router = APIRouter()
 
 
-@router.get("/qr_code/{qr_code_id}", response_model=QRCodeResponse)
+@router.get("/qr_code/{qr_code_id}", response_model=QRCodeResponseWithEquipment)
 def handle_qr_code_scan(
     qr_code_id: UUID, db: Session = Depends(get_session)
-) -> QRCodeResponse:
+) -> QRCodeResponseWithEquipment:
     qr_code = db.query(QRCode).filter(QRCode.id == qr_code_id).first()
 
     if not qr_code:
@@ -26,4 +26,4 @@ def handle_qr_code_scan(
             status_code=status.HTTP_410_GONE, detail="QR Code is archived"
         )
 
-    return QRCodeResponse.model_validate(qr_code)
+    return QRCodeResponseWithEquipment.model_validate(qr_code)
