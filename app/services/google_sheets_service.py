@@ -9,7 +9,7 @@ from googleapiclient.discovery import build  # type: ignore
 # from uuid import UUID
 from datetime import datetime
 import pytz
-from app.models.equipment_request import (
+from app.schemas.equipment_request import (
     EquipmentRequestWithEquipmentInfo,
 )
 

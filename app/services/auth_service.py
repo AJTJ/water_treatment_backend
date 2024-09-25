@@ -10,7 +10,7 @@ from mypy_boto3_cognito_idp.type_defs import (
 )
 from typing import Optional
 
-from app.models.auth import (
+from app.schemas.auth import (
     CognitoLoginResponse,
     RefreshResponse,
     UserCreateResponse,

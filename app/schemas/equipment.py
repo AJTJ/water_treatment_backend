@@ -1,48 +1,56 @@
+from datetime import datetime
+from pydantic import BaseModel
+from typing import List, Optional
 import uuid
-from sqlalchemy import String, DateTime, Text, Enum
-from datetime import datetime, timezone
-from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy.dialects.postgresql import UUID
-from app.services.database_service import Base
-from enum import Enum as PyEnum
-from .equipment_request import EquipmentRequest
+from app.models.equipment import EquipmentStatus
+from app.schemas.supplier import SupplierBaseSimple
 
 
-class EquipmentStatus(PyEnum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
+# TODO Update the database
+class EquipmentBase(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str] = None
+
+    # make = honda
+    manufacturer: Optional[str] = None
+    # model = civic
+    equipment_model_number: Optional[str] = None
+    # serial number = bin number of that car
+    serial_number: Optional[str] = None
+
+    in_plant_location: Optional[str] = None
+    image_url: Optional[str] = None
+
+    # Supplier information
+    suppliers: Optional[list[SupplierBaseSimple]] = None
+
+    # TODO: multi-plant things
+
+    # internal things
+    status: EquipmentStatus
+    created_at: datetime
+    updated_at: datetime
 
 
-class Equipment(Base):
-    __tablename__ = "equipment"
+class EquipmentBaseSimple(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str] = None
 
-    id = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
-    )
-    name = mapped_column(String, nullable=False)
-    description = mapped_column(Text, nullable=True)
-    equipment_model_number = mapped_column(String, nullable=True)
-    location = mapped_column(String, nullable=True)
-    image_url = mapped_column(String, nullable=True)
 
-    status = mapped_column(
-        Enum(
-            EquipmentStatus,
-            native_enum=False,
-        ),
-        default=EquipmentStatus.ACTIVE,
-        nullable=False,
-    )
-    created_at = mapped_column(
-        DateTime, default=datetime.now(timezone.utc), nullable=False
-    )
-    updated_at = mapped_column(
-        DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
-        nullable=False,
-    )
+class EquipmentCreate(EquipmentBase):
+    pass
 
-    equipment_requests: Mapped[list["EquipmentRequest"]] = relationship(
-        "EquipmentRequest", back_populates="equipment"
-    )
+
+class EquipmentUpdate(EquipmentBase):
+    pass
+
+
+class EquipmentResponse(EquipmentBase):
+    pass
+
+
+class ManyEquipmentResponse(BaseModel):
+    total: int
+    equipment: List[EquipmentBase]

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
-from app.schemas.qr_code import QRCode, QRCodeStatus
-from app.models.qr_code import (
+from app.models.qr_code import QRCode, QRCodeStatus
+from app.schemas.qr_code import (
     QRCodeResponseWithEquipment,
 )
 from app.services.database_service import get_session

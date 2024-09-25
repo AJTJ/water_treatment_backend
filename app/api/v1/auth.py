@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
-from app.models.auth import (
+from app.schemas.auth import (
     LogoutResponse,
     UserCreacteRequest,
     UserCreate,
@@ -7,7 +7,7 @@ from app.models.auth import (
     RefreshResponse,
     UserRoleAssociationCreate,
 )
-from app.schemas.auth import User, UserRoleAssociation
+from app.models.auth import User, UserRoleAssociation
 from app.services.auth_service import (
     create_cognito_user,
     login_cognito_user,

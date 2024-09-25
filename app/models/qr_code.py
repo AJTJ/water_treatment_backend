@@ -1,36 +1,35 @@
-from typing import Optional
-from pydantic import BaseModel
+from sqlalchemy import String, Integer, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from app.services.database_service import Base
+from app.models import Equipment
+from enum import Enum as PyEnum
 import uuid
 
-from app.schemas.qr_code import QRCodeStatus
+
+class QRCodeStatus(PyEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
 
 
-class QRCodeBase(BaseModel):
-    id: uuid.UUID
-    batch_number: int
-    full_url: str
-    status: QRCodeStatus
-    equipment_id: Optional[uuid.UUID]
+class QRCode(Base):
+    __tablename__ = "qr_code"
 
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
+    batch_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    full_url: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[QRCodeStatus] = mapped_column(
+        Enum(QRCodeStatus, native_enum=False),
+        default=QRCodeStatus.ACTIVE,
+        nullable=False,
+    )
 
-class QRCodeUpdate(BaseModel):
-    equipment_id: Optional[uuid.UUID]
-
-
-class QRCodeResponseWithEquipment(QRCodeBase):
-    equipment_name: Optional[str]
-
-    class Config:
-        from_attributes = True
-
-
-class QRCodeResponse(BaseModel):
-    total: int
-    qr_codes: list[QRCodeResponseWithEquipment]
-
-
-class QRCodeQueryParams(BaseModel):
-    skip: int = 0
-    limit: int = 200
-    min_batch_number: Optional[int] = None
-    max_batch_number: Optional[int] = None
+    # ForeignKey required since this is a many-to-one relationship
+    equipment_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", name="fk_qr_code_equipment_id"),
+        nullable=True,
+    )
+    equipment: Mapped[Equipment] = relationship("Equipment")

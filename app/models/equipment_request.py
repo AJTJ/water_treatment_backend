@@ -1,61 +1,50 @@
-from re import U
+from typing import TYPE_CHECKING
+from sqlalchemy import String, DateTime, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from datetime import datetime, timezone
+from app.services.database_service import Base
 import uuid
-from pydantic import BaseModel
-from typing import List, Optional
-from datetime import datetime
 from enum import Enum as PyEnum
 
-from app.schemas.equipment_request import EquipmentRequestStatus
+if TYPE_CHECKING:
+    from .equipment import Equipment
 
 
-class UrgencyLevels(PyEnum):
-    urgent = "urgent"
-    not_urgent = "not_urgent"
+class EquipmentRequestStatus(PyEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
 
 
-# TODO Update the database
-# Equipment/Part request
-class EquipmentRequestBase(BaseModel):
-    id: uuid.UUID
+class EquipmentRequest(Base):
+    __tablename__ = "equipment_request"
 
-    part_name: str
-    description: Optional[str] = None
-    operator_name: Optional[str] = None
-    image_url: Optional[str]
-
-    # part things
-    part_number: Optional[str] = None
-    quantity: Optional[int] = None
-    urgency: UrgencyLevels = UrgencyLevels.not_urgent
-
-    # internal things
-    equipment_id: uuid.UUID
-    status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
-    created_at: datetime
-    updated_at: datetime
-
-
-class EquipmentRequestCreate(BaseModel):
-    description: Optional[str] = None
-    operator_name: Optional[str] = None
-    image_url: Optional[str]
-    equipment_id: uuid.UUID
-
-
-class EquipmentRequestUpdate(BaseModel):
-    description: Optional[str] = None
-    operator_name: Optional[str] = None
-    image_url: Optional[str]
-
-
-class EquipmentRequestResponse(EquipmentRequestBase):
-    pass
-
-
-class EquipmentRequestWithEquipmentInfo(EquipmentRequestBase):
-    equipment_name: str
-
-
-class ManyEquipmentRequestsResponse(BaseModel):
-    total: int
-    equipment_requests: List[EquipmentRequestBase]
+    id = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
+    description = mapped_column(String, nullable=True)
+    status = mapped_column(
+        Enum(
+            EquipmentRequestStatus,
+            native_enum=False,
+        ),
+        default=EquipmentRequestStatus.ACTIVE,
+        nullable=False,
+    )
+    image_url = mapped_column(String, nullable=True)
+    employee_name = mapped_column(String, nullable=True)
+    created_at = mapped_column(DateTime, default=datetime.now, nullable=False)
+    updated_at = mapped_column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+        nullable=False,
+    )
+    equipment_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", name="fk_equipment_request_equipment_id"),
+        nullable=False,
+    )
+    equipment: Mapped["Equipment"] = relationship(
+        "Equipment", back_populates="equipment_requests"
+    )

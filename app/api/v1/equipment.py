@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
-from app.schemas.equipment import Equipment, EquipmentStatus
-from app.models.equipment import (
+from app.models.equipment import Equipment, EquipmentStatus
+from app.schemas.equipment import (
     EquipmentBase,
     EquipmentCreate,
     EquipmentResponse,

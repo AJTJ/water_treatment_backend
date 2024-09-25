@@ -1,79 +1,54 @@
+from datetime import datetime, timezone
+from sqlalchemy import String, Enum, ForeignKey, DateTime
+from sqlalchemy.orm import mapped_column, relationship, Mapped
+from app.services.database_service import Base
+from enum import Enum as PyEnum
 from typing import List
-from pydantic import BaseModel
-from datetime import datetime
-
-from app.schemas.auth import UserRole, UserRoleAssociation, UserStatus
 
 
-class User(BaseModel):
-    id: str
-    user_name: str
-    email: str
-    roles: List[UserRole]
-    status: UserStatus
-    last_login: datetime
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    OPERATOR = "operator"
+    SYSTEM_ADMIN = "system_admin"
 
 
-class UserCreacteRequest(BaseModel):
-    user_name: str
-    email: str
-    roles: List[UserRole]
+class UserStatus(PyEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
 
 
-class UserCreate(BaseModel):
-    id: str
-    user_name: str
-    email: str
-    roles: List[UserRoleAssociation]
+class UserRoleAssociation(Base):
+    __tablename__ = "user_roles"
+
+    user_id = mapped_column(String, ForeignKey("users.id"), primary_key=True)
+    role = mapped_column(
+        Enum(UserRole, native_enum=False), nullable=False, primary_key=True
+    )
 
 
-class UserCreateResponse(BaseModel):
-    user_name: str
-    email: str
-    sub: str
-
-
-class UserUpdate(BaseModel):
-    user_name: str
-    email: str
-    roles: List[UserRoleAssociation]
-
-
-# LOGIN/LOGOUT
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-
-class LogoutResponse(BaseModel):
-    message: str
-
-
-# COGNITO
-class ValidTokenResponse(BaseModel):
-    access_token: str
-    id_token: str
-    refresh_token: str
-    token_type: str
-    expires_in: int
-
-
-class RefreshResponse(BaseModel):
-    access_token: str
-    id_token: str
-    token_type: str
-    expires_in: int
-
-
-class CognitoLoginResponse(BaseModel):
-    sub: str
-
-
-# User Role
-class UserRoleAssociationBase(BaseModel):
-    user_id: str
-    role: UserRole
-
-
-class UserRoleAssociationCreate(UserRoleAssociationBase):
-    pass
+class User(Base):
+    __tablename__ = "users"
+    id = mapped_column(String, nullable=False, unique=True, primary_key=True)
+    user_name = mapped_column(String, nullable=False)
+    email = mapped_column(String, nullable=False, unique=True)
+    roles: Mapped[List[UserRoleAssociation]] = relationship(
+        "UserRoleAssociation",
+        backref="users",
+        lazy="joined",
+        collection_class=list,
+        cascade="all, delete",
+    )
+    status = mapped_column(
+        Enum(
+            UserStatus,
+            native_enum=False,
+        ),
+        default=UserStatus.ACTIVE,
+        nullable=False,
+    )
+    last_login = mapped_column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+        nullable=False,
+    )

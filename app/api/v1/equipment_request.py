@@ -10,7 +10,7 @@ from app.services.google_sheets_service import sync_to_google_sheet
 from app.core.logging_config import logger
 
 # Models
-from app.models.equipment_request import (
+from app.schemas.equipment_request import (
     EquipmentRequestCreate,
     EquipmentRequestResponse,
     EquipmentRequestUpdate,
@@ -18,11 +18,11 @@ from app.models.equipment_request import (
     ManyEquipmentRequestsResponse,
     EquipmentRequestBase,
 )
-from app.models.failed_sync import FailedSyncCreate
+from app.schemas.failed_sync import FailedSyncCreate
 
 # Schemas
-from app.schemas.failed_sync import FailedSync
-from app.schemas.equipment_request import (
+from app.models.failed_sync import FailedSync
+from app.models.equipment_request import (
     EquipmentRequest,
     EquipmentRequestStatus,
 )

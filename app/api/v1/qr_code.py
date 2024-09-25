@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from typing import List
 from uuid import UUID
-from app.schemas.equipment import Equipment
-from app.schemas.qr_code import QRCode, QRCodeStatus  # SQLAlchemy model
-from app.models.qr_code import (
+from app.models.equipment import Equipment
+from app.models.qr_code import QRCode, QRCodeStatus  # SQLAlchemy model
+from app.schemas.qr_code import (
     QRCodeQueryParams,
     QRCodeResponseWithEquipment,
     QRCodeResponse,
