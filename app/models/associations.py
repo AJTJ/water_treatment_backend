@@ -22,6 +22,26 @@ items_suppliers_association = Table(
     ),
 )
 
+
+items_parts_association = Table(
+    "items_parts_association",
+    Base.metadata,
+    Column(
+        "parent_item_id",
+        UUID(as_uuid=True),
+        ForeignKey("item.id"),
+        primary_key=True,
+        nullable=False,
+    ),
+    Column(
+        "child_item_id",
+        UUID(as_uuid=True),
+        ForeignKey("item.id"),
+        primary_key=True,
+        nullable=False,
+    ),
+)
+
 items_item_types_association = Table(
     "items_item_types",
     Base.metadata,

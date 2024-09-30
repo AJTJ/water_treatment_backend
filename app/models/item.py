@@ -8,7 +8,11 @@ from enum import Enum as PyEnum
 from .item_request import ItemRequest
 from .supplier import Supplier
 from .item_type import ItemType
-from .associations import items_suppliers_association, items_item_types_association
+from .associations import (
+    items_suppliers_association,
+    items_item_types_association,
+    items_parts_association,
+)
 
 
 class ItemStatusEnum(PyEnum):
@@ -31,6 +35,14 @@ class Item(Base):
 
     in_plant_location = mapped_column(String, nullable=True)
     image_url = mapped_column(String, nullable=True)
+
+    parts: Mapped[list["Item"]] = relationship(
+        "Item",
+        secondary=items_parts_association,
+        primaryjoin=id == items_parts_association.c.parent_item_id,
+        secondaryjoin=id == items_parts_association.c.child_item_id,
+        backref="parents",
+    )
 
     item_types: Mapped[list["ItemType"]] = relationship(
         "ItemType", secondary=items_item_types_association, back_populates="items"
