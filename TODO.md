@@ -11,7 +11,7 @@ Copy code
 def get_suppliers():
     suppliers = db.query(Supplier).all()
     # Prevent the recursive serialization
-    return [supplier.dict(exclude={"equipment": True}) for supplier in suppliers]
+    return [supplier.dict(exclude={"item": True}) for supplier in suppliers]
 Read vs Write Models:
 
 Use the full model for creating/updating records (when full relational data might be needed) and use a simplified model for read operations (when relationships don’t need to be recursively included).
@@ -21,7 +21,7 @@ python
 Copy code
 class SupplierCreate(BaseModel):
     name: str
-    equipment_ids: List[uuid.UUID]
+    item_ids: List[uuid.UUID]
 Example for Read:
 
 python
@@ -29,8 +29,8 @@ Copy code
 class SupplierRead(BaseModel):
     id: uuid.UUID
     name: str
-    # Optionally include a shallow reference to equipment
-    equipment: Optional[list[EquipmentBaseSimple]]
+    # Optionally include a shallow reference to item
+    item: Optional[list[itemBaseSimple]]
 Conclusion:
 Yes, this recursive reference could be a problem in your code, especially with many-to-many relationships.
 The most idiomatic approach is to use separate models for input (write) and output (read), where the output model doesn’t include the full nested relationship. This ensures you avoid circular references while still keeping the data structure intact for validation and input.
@@ -40,7 +40,7 @@ This approach will help you avoid recursive reference issues while keeping your 
 API
 - Add Auth for generating QR codes
 
-Equipment
+item
 - Review Ewan's notes on specifics about endpoints
 
 Alembic

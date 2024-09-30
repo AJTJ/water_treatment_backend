@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
 import uuid
 from sqlalchemy import String
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.services.database_service import Base
-from .equipment import Equipment, equipment_supplier_association
+
+if TYPE_CHECKING:
+    from .item import Item
+
+# from .item import Item
+from .associations import items_suppliers_association
 
 
 class Supplier(Base):
@@ -15,8 +21,8 @@ class Supplier(Base):
     name = mapped_column(String, nullable=False)
 
     # Mapped implies that it is mapped to a column
-    equipment: Mapped[list["Equipment"]] = relationship(
-        "Equipment",
-        secondary=equipment_supplier_association,
+    item: Mapped[list["Item"]] = relationship(
+        "Item",
+        secondary=items_suppliers_association,
         back_populates="suppliers",
     )

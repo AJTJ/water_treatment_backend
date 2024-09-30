@@ -10,15 +10,15 @@ class QRCodeBase(BaseModel):
     batch_number: int
     full_url: str
     status: QRCodeStatus
-    equipment_id: Optional[uuid.UUID]
+    item_id: Optional[uuid.UUID]
 
 
 class QRCodeUpdate(BaseModel):
-    equipment_id: Optional[uuid.UUID]
+    item_id: Optional[uuid.UUID]
 
 
-class QRCodeResponseWithEquipment(QRCodeBase):
-    equipment_name: Optional[str]
+class QRCodeResponseWithItem(QRCodeBase):
+    item_name: Optional[str]
 
     class Config:
         from_attributes = True
@@ -26,7 +26,7 @@ class QRCodeResponseWithEquipment(QRCodeBase):
 
 class QRCodeResponse(BaseModel):
     total: int
-    qr_codes: list[QRCodeResponseWithEquipment]
+    qr_codes: list[QRCodeResponseWithItem]
 
 
 class QRCodeQueryParams(BaseModel):

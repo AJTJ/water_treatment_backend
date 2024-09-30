@@ -1,11 +1,10 @@
-from re import U
 import uuid
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from app.models.equipment_request import EquipmentRequestStatus
+from app.models.item_request import ItemRequestStatusEnum
 
 
 class UrgencyLevels(PyEnum):
@@ -13,9 +12,7 @@ class UrgencyLevels(PyEnum):
     not_urgent = "not_urgent"
 
 
-# TODO Update the database
-# Equipment/Part request
-class EquipmentRequestBase(BaseModel):
+class ItemRequestBase(BaseModel):
     id: uuid.UUID
 
     part_name: str
@@ -29,33 +26,33 @@ class EquipmentRequestBase(BaseModel):
     urgency: UrgencyLevels = UrgencyLevels.not_urgent
 
     # internal things
-    equipment_id: uuid.UUID
-    status: EquipmentRequestStatus = EquipmentRequestStatus.ACTIVE
+    item_id: uuid.UUID
+    status: ItemRequestStatusEnum = ItemRequestStatusEnum.ACTIVE
     created_at: datetime
     updated_at: datetime
 
 
-class EquipmentRequestCreate(BaseModel):
+class ItemRequestCreate(BaseModel):
     description: Optional[str] = None
     operator_name: Optional[str] = None
     image_url: Optional[str]
-    equipment_id: uuid.UUID
+    item_id: uuid.UUID
 
 
-class EquipmentRequestUpdate(BaseModel):
+class ItemRequestUpdate(BaseModel):
     description: Optional[str] = None
     operator_name: Optional[str] = None
     image_url: Optional[str]
 
 
-class EquipmentRequestResponse(EquipmentRequestBase):
+class ItemRequestResponse(ItemRequestBase):
     pass
 
 
-class EquipmentRequestWithEquipmentInfo(EquipmentRequestBase):
-    equipment_name: str
+class ItemRequestWithItemInfo(ItemRequestBase):
+    item_name: str
 
 
-class ManyEquipmentRequestsResponse(BaseModel):
+class ManyItemRequestsResponse(BaseModel):
     total: int
-    equipment_requests: List[EquipmentRequestBase]
+    item_requests: List[ItemRequestBase]

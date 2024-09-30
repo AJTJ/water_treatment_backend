@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Response
-from app.api.v1 import auth, equipment, equipment_request, qr_code, s3_endpoints
+from app.api.v1 import auth, item, item_request, qr_code, s3_endpoints
 from app.api.unversioned_api import qr_code as qr_code_unversioned
 from app.core.logging_config import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,9 +11,9 @@ setup_logging()
 app: FastAPI = FastAPI(title="Water Treatment API", version="1.0")
 
 # Versioned endpoints
-app.include_router(equipment.router, prefix="/v1/equipment", tags=["equipment"])
+app.include_router(item.router, prefix="/v1/item", tags=["item"])
 app.include_router(
-    equipment_request.router, prefix="/v1/equipment_request", tags=["equipment_request"]
+    item_request.router, prefix="/v1/item_request", tags=["item_request"]
 )
 app.include_router(qr_code.router, prefix="/v1/qr_code", tags=["qr_code"])
 app.include_router(s3_endpoints.router, prefix="/api/v1/s3", tags=["S3"])

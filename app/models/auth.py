@@ -1,5 +1,4 @@
-from datetime import datetime, timezone
-from sqlalchemy import String, Enum, ForeignKey, DateTime
+from sqlalchemy import String, Enum, ForeignKey, DateTime, func
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from app.services.database_service import Base
 from enum import Enum as PyEnum
@@ -48,7 +47,7 @@ class User(Base):
     )
     last_login = mapped_column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )

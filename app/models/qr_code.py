@@ -2,7 +2,7 @@ from sqlalchemy import String, Integer, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.services.database_service import Base
-from app.models import Equipment
+from app.models import Item
 from enum import Enum as PyEnum
 import uuid
 
@@ -27,9 +27,9 @@ class QRCode(Base):
     )
 
     # ForeignKey required since this is a many-to-one relationship
-    equipment_id = mapped_column(
+    item_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("equipment.id", name="fk_qr_code_equipment_id"),
+        ForeignKey("item.id", name="fk_qr_code_item_id"),
         nullable=True,
     )
-    equipment: Mapped[Equipment] = relationship("Equipment")
+    item: Mapped[Item] = relationship("Item")

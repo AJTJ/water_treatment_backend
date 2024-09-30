@@ -4,7 +4,7 @@ import uuid
 
 
 class FailedSyncBase(BaseModel):
-    equipment_request_id: uuid.UUID
+    item_request_id: uuid.UUID
     error_message: Optional[str]
     request_data: Dict[str, Any]
 

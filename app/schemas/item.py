@@ -2,12 +2,11 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
-from app.models.equipment import EquipmentStatus
+from app.models.item import ItemStatusEnum
 from app.schemas.supplier import SupplierBaseSimple
 
 
-# TODO Update the database
-class EquipmentBase(BaseModel):
+class ItemBase(BaseModel):
     id: uuid.UUID
     name: str
     description: Optional[str] = None
@@ -15,7 +14,7 @@ class EquipmentBase(BaseModel):
     # make = honda
     manufacturer: Optional[str] = None
     # model = civic
-    equipment_model_number: Optional[str] = None
+    model_number: Optional[str] = None
     # serial number = bin number of that car
     serial_number: Optional[str] = None
 
@@ -25,32 +24,30 @@ class EquipmentBase(BaseModel):
     # Supplier information
     suppliers: Optional[list[SupplierBaseSimple]] = None
 
-    # TODO: multi-plant things
-
     # internal things
-    status: EquipmentStatus
+    status: ItemStatusEnum
     created_at: datetime
     updated_at: datetime
 
 
-class EquipmentBaseSimple(BaseModel):
+class ItemBaseSimple(BaseModel):
     id: uuid.UUID
     name: str
     description: Optional[str] = None
 
 
-class EquipmentCreate(EquipmentBase):
+class ItemCreate(ItemBase):
     pass
 
 
-class EquipmentUpdate(EquipmentBase):
+class ItemUpdate(ItemBase):
     pass
 
 
-class EquipmentResponse(EquipmentBase):
+class ItemResponse(ItemBase):
     pass
 
 
-class ManyEquipmentResponse(BaseModel):
+class ManyItemsResponse(BaseModel):
     total: int
-    equipment: List[EquipmentBase]
+    items: List[ItemBase]

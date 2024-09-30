@@ -1,23 +1,22 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import String, DateTime, ForeignKey, Enum
+from sqlalchemy import String, DateTime, ForeignKey, Enum, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from datetime import datetime, timezone
 from app.services.database_service import Base
 import uuid
 from enum import Enum as PyEnum
 
 if TYPE_CHECKING:
-    from .equipment import Equipment
+    from .item import Item
 
 
-class EquipmentRequestStatus(PyEnum):
+class ItemRequestStatusEnum(PyEnum):
     ACTIVE = "active"
     ARCHIVED = "archived"
 
 
-class EquipmentRequest(Base):
-    __tablename__ = "equipment_request"
+class ItemRequest(Base):
+    __tablename__ = "item_request"
 
     id = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
@@ -25,26 +24,24 @@ class EquipmentRequest(Base):
     description = mapped_column(String, nullable=True)
     status = mapped_column(
         Enum(
-            EquipmentRequestStatus,
+            ItemRequestStatusEnum,
             native_enum=False,
         ),
-        default=EquipmentRequestStatus.ACTIVE,
+        default=ItemRequestStatusEnum.ACTIVE,
         nullable=False,
     )
     image_url = mapped_column(String, nullable=True)
     employee_name = mapped_column(String, nullable=True)
-    created_at = mapped_column(DateTime, default=datetime.now, nullable=False)
+    created_at = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at = mapped_column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
-    equipment_id = mapped_column(
+    item_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("equipment.id", name="fk_equipment_request_equipment_id"),
+        ForeignKey("item.id", name="fk_item_request_item_id"),
         nullable=False,
     )
-    equipment: Mapped["Equipment"] = relationship(
-        "Equipment", back_populates="equipment_requests"
-    )
+    item: Mapped["Item"] = relationship("Item", back_populates="item_requests")

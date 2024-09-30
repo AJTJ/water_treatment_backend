@@ -1,14 +1,13 @@
-# app/api/v1/qr_code.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from typing import List
 from uuid import UUID
-from app.models.equipment import Equipment
+from app.models.item import Item
 from app.models.qr_code import QRCode, QRCodeStatus  # SQLAlchemy model
 from app.schemas.qr_code import (
     QRCodeQueryParams,
-    QRCodeResponseWithEquipment,
+    QRCodeResponseWithItem,
     QRCodeResponse,
     QRCodeUpdate,
 )  # Pydantic models
@@ -19,12 +18,12 @@ router = APIRouter()
 
 @router.post(
     "/batch",
-    response_model=List[QRCodeResponseWithEquipment],
+    response_model=List[QRCodeResponseWithItem],
     status_code=status.HTTP_201_CREATED,
 )
 def create_batch_qr_codes(
     number_of_qr_codes: int, db: Session = Depends(get_session)
-) -> List[QRCodeResponseWithEquipment]:
+) -> List[QRCodeResponseWithItem]:
     if number_of_qr_codes <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -34,7 +33,7 @@ def create_batch_qr_codes(
     # Get the current highest batch number
     max_batch_number = db.query(func.max(QRCode.batch_number)).scalar() or 0
 
-    qr_codes: List[QRCodeResponseWithEquipment] = []
+    qr_codes: List[QRCodeResponseWithItem] = []
     for i in range(number_of_qr_codes):
         new_batch_number: int = max_batch_number + 1 + i
         qr_code = QRCode()
@@ -50,7 +49,7 @@ def create_batch_qr_codes(
         db.commit()
         db.refresh(qr_code)
 
-        qr_codes.append(QRCodeResponseWithEquipment.model_validate(qr_code))
+        qr_codes.append(QRCodeResponseWithItem.model_validate(qr_code))
 
     return qr_codes
 
@@ -70,11 +69,11 @@ def get_many_qr_codes(
 
     total_qr_codes = query.count()
 
-    equipment_alias = aliased(Equipment)
+    item_alias = aliased(Item)
 
-    qr_codes_with_equipment = (
-        query.outerjoin(equipment_alias, QRCode.equipment_id == equipment_alias.id)
-        .with_entities(QRCode, equipment_alias.name.label("equipment_name"))
+    qr_codes_with_item = (
+        query.outerjoin(item_alias, QRCode.item_id == item_alias.id)
+        .with_entities(QRCode, item_alias.name.label("item_name"))
         .offset(query_params.skip)
         .limit(query_params.limit)
         .all()
@@ -82,17 +81,17 @@ def get_many_qr_codes(
 
     # TODO: this needs to be tested
     qr_code_responses = [
-        QRCodeResponseWithEquipment.model_validate((qr, equipment_name))
-        for qr, equipment_name in qr_codes_with_equipment
+        QRCodeResponseWithItem.model_validate((qr, item_name))
+        for qr, item_name in qr_codes_with_item
     ]
 
     return QRCodeResponse(total=total_qr_codes, qr_codes=qr_code_responses)
 
 
-@router.get("/{qr_code_id}", response_model=QRCodeResponseWithEquipment)
+@router.get("/{qr_code_id}", response_model=QRCodeResponseWithItem)
 def get_qr_code(
     qr_code_id: UUID, db: Session = Depends(get_session)
-) -> QRCodeResponseWithEquipment:
+) -> QRCodeResponseWithItem:
     qr_code = (
         db.query(QRCode)
         .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
@@ -102,15 +101,15 @@ def get_qr_code(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="QR Code not found"
         )
-    return QRCodeResponseWithEquipment.model_validate(qr_code)
+    return QRCodeResponseWithItem.model_validate(qr_code)
 
 
-@router.put("/{qr_code_id}", response_model=QRCodeResponseWithEquipment)
+@router.put("/{qr_code_id}", response_model=QRCodeResponseWithItem)
 def update_qr_code(
     qr_code_id: UUID,
     qr_code_update: QRCodeUpdate,
     db: Session = Depends(get_session),
-) -> QRCodeResponseWithEquipment:
+) -> QRCodeResponseWithItem:
     qr_code = (
         db.query(QRCode)
         .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
@@ -122,28 +121,24 @@ def update_qr_code(
         )
 
     # unnecessary?
-    if qr_code_update.equipment_id:
-        equipment = (
-            db.query(Equipment)
-            .filter(Equipment.id == qr_code_update.equipment_id)
-            .first()
-        )
-        if equipment is None:
+    if qr_code_update.item_id:
+        item = db.query(Item).filter(Item.id == qr_code_update.item_id).first()
+        if item is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Equipment not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Item not found"
             )
 
     for key, value in qr_code_update.model_dump(exclude_unset=True).items():
         setattr(qr_code, key, value)
     db.commit()
     db.refresh(qr_code)
-    return QRCodeResponseWithEquipment.model_validate(qr_code)
+    return QRCodeResponseWithItem.model_validate(qr_code)
 
 
-@router.delete("/{qr_code_id}", response_model=QRCodeResponseWithEquipment)
+@router.delete("/{qr_code_id}", response_model=QRCodeResponseWithItem)
 def delete_qr_code(
     qr_code_id: UUID, db: Session = Depends(get_session)
-) -> QRCodeResponseWithEquipment:
+) -> QRCodeResponseWithItem:
     qr_code = (
         db.query(QRCode)
         .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
@@ -156,4 +151,4 @@ def delete_qr_code(
 
     qr_code.status = QRCodeStatus.ARCHIVED
     db.commit()
-    return QRCodeResponseWithEquipment.model_validate(qr_code)
+    return QRCodeResponseWithItem.model_validate(qr_code)
