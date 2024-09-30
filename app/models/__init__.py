@@ -10,6 +10,8 @@ from app.models.auth import User, UserStatus, UserRole, UserRoleAssociation
 from app.models.supplier import Supplier
 from app.models.associations import (
     items_suppliers_association,
+    items_item_types_association,
+    items_parts_association,
 )
 from app.models.item_type import ItemType, ItemTypeEnum
 
@@ -37,4 +39,6 @@ __all__ = [
     "Supplier",
     # Associations
     "items_suppliers_association",
+    "items_item_types_association",
+    "items_parts_association",
 ]
