@@ -23,19 +23,29 @@ class ItemStatusEnum(PyEnum):
 class Item(Base):
     __tablename__ = "item"
 
+    # Core Fields
     id = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     name = mapped_column(String, nullable=False)
     description = mapped_column(Text, nullable=True)
+    item_types: Mapped[list["ItemType"]] = relationship(
+        "ItemType", secondary=items_item_types_association, back_populates="items"
+    )
 
+    # Manufacturer and Supplier information
     manufacturer = mapped_column(String, nullable=True)
     model_number = mapped_column(String, nullable=True)
     serial_number = mapped_column(String, nullable=True)
+    suppliers: Mapped[list["Supplier"]] = relationship(
+        "Supplier", secondary=items_suppliers_association, back_populates="items"
+    )
 
+    # Location information
     in_plant_location = mapped_column(String, nullable=True)
     image_url = mapped_column(String, nullable=True)
 
+    # Parts
     parts: Mapped[list["Item"]] = relationship(
         "Item",
         secondary=items_parts_association,
@@ -44,14 +54,19 @@ class Item(Base):
         backref="parents",
     )
 
-    item_types: Mapped[list["ItemType"]] = relationship(
-        "ItemType", secondary=items_item_types_association, back_populates="items"
+    # Item Requests
+    item_requests: Mapped[list["ItemRequest"]] = relationship(
+        "ItemRequest", back_populates="item"
     )
 
-    suppliers: Mapped[list["Supplier"]] = relationship(
-        "Supplier", secondary=items_suppliers_association, back_populates="items"
+    # Metadata
+    created_at = mapped_column(DateTime, default=func.now(), nullable=False)
+    updated_at = mapped_column(
+        DateTime,
+        default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
-
     status = mapped_column(
         Enum(
             ItemStatusEnum,
@@ -59,17 +74,4 @@ class Item(Base):
         ),
         default=ItemStatusEnum.ACTIVE,
         nullable=False,
-    )
-
-    created_at = mapped_column(DateTime, default=func.now(), nullable=False)
-
-    updated_at = mapped_column(
-        DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
-
-    item_requests: Mapped[list["ItemRequest"]] = relationship(
-        "ItemRequest", back_populates="item"
     )
