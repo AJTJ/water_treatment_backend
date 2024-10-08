@@ -9,7 +9,7 @@ from googleapiclient.discovery import build  # type: ignore
 # from uuid import UUID
 from datetime import datetime
 import pytz
-from app.schemas.item_request import (
+from app.schemas.item_and_item_request import (
     ItemRequestWithItemInfo,
 )
 
@@ -46,7 +46,7 @@ def sync_to_google_sheet(request_data: ItemRequestWithItemInfo) -> None:
     values: list[list[str]] = [
         [
             formatted_date,
-            request_data.item_name,
+            request_data.item_name or "",
             request_data.description or "",
             request_data.image_url or "",
             str(request_data.id),

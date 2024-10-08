@@ -10,7 +10,7 @@ from app.services.google_sheets_service import sync_to_google_sheet
 from app.core.logging_config import logger
 
 # Models
-from app.schemas.item_request import (
+from app.schemas.item_and_item_request import (
     ItemRequestCreate,
     ItemRequestResponse,
     ItemRequestUpdate,
@@ -27,12 +27,11 @@ from app.models.item_request import (
     ItemRequestStatusEnum,
 )
 
-
 router = APIRouter()
 
 
 @router.post(
-    "/", response_model=ItemRequestResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=ItemRequestResponse, status_code=status.HTTP_201_CREATED
 )
 def create_item_request(
     item_request: ItemRequestCreate,
@@ -44,12 +43,14 @@ def create_item_request(
     db.commit()
     db.refresh(db_request)
 
-    item = get_item(item_request.item_id)
+    item = None
+    if item_request.item_id:
+        item = get_item(item_request.item_id)
 
     request_and_item = ItemRequestWithItemInfo(
         **item_request.model_dump(),
-        item_id=item.id,
-        item_name=item.name,
+        item_id=item.id if item else None,
+        item_name=item.name if item else None,
     )
 
     try:
@@ -100,7 +101,7 @@ def retry_failed_syncs(db: Session = Depends(get_session)) -> None:
             logger.error(f"Retry sync failed for {sync.item_request_id}: {e}")
 
 
-@router.get("/", response_model=ManyItemRequestsResponse)
+@router.get("", response_model=ManyItemRequestsResponse)
 def get_many_item_requests(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> ManyItemRequestsResponse:

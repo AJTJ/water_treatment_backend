@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 from app.models.item import Item, ItemStatusEnum
-from app.schemas.item import (
+from app.schemas.item_and_item_request import (
     ItemBase,
     ItemCreate,
     ItemResponse,
@@ -14,7 +14,7 @@ from app.services.database_service import get_session
 router = APIRouter()
 
 
-@router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(item: ItemCreate, db: Session = Depends(get_session)) -> ItemResponse:
     db_item = Item(**item.model_dump())
     db.add(db_item)
@@ -23,7 +23,7 @@ def create_item(item: ItemCreate, db: Session = Depends(get_session)) -> ItemRes
     return ItemResponse.model_validate(db_item)
 
 
-@router.get("/", response_model=ManyItemsResponse)
+@router.get("", response_model=ManyItemsResponse)
 def get_many_items(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> ManyItemsResponse:

@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
-from app.schemas.auth import (
+from app.schemas.user import (
     LogoutResponse,
-    UserCreacteRequest,
+    UserBase,
+    UserCreateRequest,
     UserCreate,
     LoginRequest,
     RefreshResponse,
     UserRoleAssociationCreate,
+    UserRoleAssociationSchema,
 )
-from app.models.auth import User, UserRoleAssociation
+from app.models.user import User
 from app.services.auth_service import (
     create_cognito_user,
     login_cognito_user,
@@ -19,12 +21,12 @@ from sqlalchemy.orm import Session
 router = APIRouter()
 
 
-@router.post("/login", response_model=User)
+@router.post("/login", response_model=UserBase)
 def login(
     request: LoginRequest,
     response: Response,
     db: Session = Depends(get_session),
-) -> User:
+) -> UserBase:
     # Check if the user exists in the complementary database
     cognito_response = login_cognito_user(request.email, request.password, response)
 
@@ -34,7 +36,7 @@ def login(
         raise HTTPException(status_code=404, detail="User not found")
 
     db.refresh(user)
-    return user
+    return UserBase.model_validate(user)
 
 
 @router.post("/refresh-token", response_model=RefreshResponse)
@@ -47,9 +49,9 @@ def refresh_token(
 
 @router.post("/create-user/")
 async def create_user_endpoint(
-    user_create_request: UserCreacteRequest,
+    user_create_request: UserCreateRequest,
     db: Session = Depends(get_session),
-) -> User:
+) -> UserBase:
     response = create_cognito_user(
         user_create_request.user_name, user_create_request.email
     )
@@ -61,7 +63,9 @@ async def create_user_endpoint(
         for role in user_create_request.roles
     ]
 
-    roles = [UserRoleAssociation(**role.model_dump()) for role in roles_associations]
+    roles = [
+        UserRoleAssociationSchema(**role.model_dump()) for role in roles_associations
+    ]
 
     user_create = UserCreate(
         id=response.sub,
@@ -77,7 +81,7 @@ async def create_user_endpoint(
 
     if not user:
         raise HTTPException(status_code=404, detail="New User not found")
-    return user
+    return UserBase.model_validate(user)
 
 
 @router.post("/logout/")

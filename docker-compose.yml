@@ -15,9 +15,3 @@ services:
 
 volumes:
   postgres_data:
-
-# to remove the volume add the -v
-# docker-compose down -v
-
-# the -d is for detached mode
-# docker-compose up -d

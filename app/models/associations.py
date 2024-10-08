@@ -23,7 +23,6 @@ items_suppliers_association = Table(
     ),
 )
 
-
 items_parts_association = Table(
     "items_parts_association",
     Base.metadata,

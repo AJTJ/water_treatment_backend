@@ -1,6 +1,6 @@
 
 # migration script
-`alembic revision --autogenerate -m "baseline schema/whatever message"`
+`alembic revision --autogenerate -m "baseline schema"`
 
 # Apply all pending migrations to the database schema
 `alembic upgrade head`

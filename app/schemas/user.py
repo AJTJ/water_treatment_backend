@@ -2,10 +2,16 @@ from typing import List
 from pydantic import BaseModel
 from datetime import datetime
 
-from app.models.auth import UserRole, UserRoleAssociation, UserStatus
+from app.models.user import UserRole, UserStatus
 
 
-class User(BaseModel):
+# USER ROLE ASSOCIATION
+class UserRoleAssociationSchema(BaseModel):
+    user_id: str
+    role: UserRole
+
+
+class UserBase(BaseModel):
     id: str
     user_name: str
     email: str
@@ -14,7 +20,8 @@ class User(BaseModel):
     last_login: datetime
 
 
-class UserCreacteRequest(BaseModel):
+# CREATE USER
+class UserCreateRequest(BaseModel):
     user_name: str
     email: str
     roles: List[UserRole]
@@ -24,7 +31,7 @@ class UserCreate(BaseModel):
     id: str
     user_name: str
     email: str
-    roles: List[UserRoleAssociation]
+    roles: List[UserRoleAssociationSchema]
 
 
 class UserCreateResponse(BaseModel):
@@ -33,10 +40,11 @@ class UserCreateResponse(BaseModel):
     sub: str
 
 
+# UPDATE USER
 class UserUpdate(BaseModel):
     user_name: str
     email: str
-    roles: List[UserRoleAssociation]
+    roles: List[UserRoleAssociationSchema]
 
 
 # LOGIN/LOGOUT
@@ -69,7 +77,7 @@ class CognitoLoginResponse(BaseModel):
     sub: str
 
 
-# User Role
+# USER ROLES
 class UserRoleAssociationBase(BaseModel):
     user_id: str
     role: UserRole

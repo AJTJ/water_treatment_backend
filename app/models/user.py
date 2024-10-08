@@ -36,7 +36,7 @@ class User(Base):
     )
     user_name = mapped_column(String, nullable=False)
     email = mapped_column(String, nullable=False, unique=True)
-    roles: Mapped[List[UserRoleAssociation]] = relationship(
+    roles: Mapped[List["UserRoleAssociation"]] = relationship(
         "UserRoleAssociation",
         backref="user",
         lazy="joined",

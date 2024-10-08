@@ -54,7 +54,7 @@ def create_batch_qr_codes(
     return qr_codes
 
 
-@router.get("/", response_model=QRCodeResponse)
+@router.get("", response_model=QRCodeResponse)
 def get_many_qr_codes(
     query_params: QRCodeQueryParams = Depends(),
     db: Session = Depends(get_session),

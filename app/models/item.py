@@ -35,7 +35,7 @@ class Item(Base):
 
     # Manufacturer and Supplier information
     manufacturer = mapped_column(String, nullable=True)
-    model_number = mapped_column(String, nullable=True)
+    item_model_number = mapped_column(String, nullable=True)
     serial_number = mapped_column(String, nullable=True)
     suppliers: Mapped[list["Supplier"]] = relationship(
         "Supplier", secondary=items_suppliers_association, back_populates="items"

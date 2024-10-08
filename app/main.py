@@ -3,12 +3,13 @@ from app.api.v1 import auth, item, item_request, qr_code, s3_endpoints
 from app.api.unversioned_api import qr_code as qr_code_unversioned
 from app.core.logging_config import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Awaitable, Dict, Callable
+from typing import Any, Awaitable, Dict, Callable
 from fastapi.responses import JSONResponse
 
 setup_logging()
 
 app: FastAPI = FastAPI(title="Water Treatment API", version="1.0")
+
 
 # Versioned endpoints
 app.include_router(item.router, prefix="/v1/item", tags=["item"])
@@ -30,6 +31,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_request_data(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Any:
+    print(f"Request URL: {request.url.path}")
+    response: Any = await call_next(request)
+    return response
 
 
 # Custom error handler for unexpected exceptions

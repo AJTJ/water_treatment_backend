@@ -21,7 +21,7 @@ class Supplier(Base):
     name = mapped_column(String, nullable=False)
 
     # Mapped implies that it is mapped to a column
-    item: Mapped[list["Item"]] = relationship(
+    items: Mapped[list["Item"]] = relationship(
         "Item",
         secondary=items_suppliers_association,
         back_populates="suppliers",
