@@ -97,3 +97,20 @@ item_request_parts_association = Table(
         default=PartRequestUrgencyLevels.not_urgent,
     ),
 )
+
+user_role_association = Table(
+    "user_role_association",
+    Base.metadata,
+    Column(
+        "user_id",
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "role_id",
+        UUID(as_uuid=True),
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)

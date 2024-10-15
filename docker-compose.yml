@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:13  # PostgreSQL version
+    image: postgres:13
     container_name: water_treatment_db
     environment:
       POSTGRES_USER: water_treatment_user
@@ -12,6 +12,25 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "water_treatment_user", "-d", "water_treatment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  server:
+    build:
+      context: .
+    container_name: water_treatment_api
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

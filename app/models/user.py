@@ -1,16 +1,19 @@
+import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, Enum, ForeignKey, DateTime, func
+from sqlalchemy import String, Enum, DateTime, func
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from app.services.database_service import Base
 from enum import Enum as PyEnum
 from typing import List
+from .associations import user_role_association
 
 
 # Using an enum here, for now is fine, but if I require more complex roles, I will need to create a separate table
 class UserRole(PyEnum):
+    SUPER_ADMIN = "super_admin"
+    SYSTEM_ADMIN = "system_admin"
     ADMIN = "admin"
     OPERATOR = "operator"
-    SYSTEM_ADMIN = "system_admin"
 
 
 class UserStatus(PyEnum):
@@ -18,15 +21,25 @@ class UserStatus(PyEnum):
     ARCHIVED = "archived"
 
 
-class UserRoleAssociation(Base):
-    __tablename__ = "user_roles"
+class Role(Base):
+    __tablename__ = "roles"
 
-    user_id = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True
+    id = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        primary_key=True,
+        default=lambda: uuid.uuid4(),
     )
-    role = mapped_column(
-        Enum(UserRole, native_enum=False), nullable=False, primary_key=True
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+
+    # Backref to users with this role
+    users: Mapped[List["User"]] = relationship(
+        "User", secondary=user_role_association, back_populates="roles"
     )
+
+    def __init__(self, name: str) -> None:
+        self.name = name
 
 
 class User(Base):
@@ -36,12 +49,8 @@ class User(Base):
     )
     user_name = mapped_column(String, nullable=False)
     email = mapped_column(String, nullable=False, unique=True)
-    roles: Mapped[List["UserRoleAssociation"]] = relationship(
-        "UserRoleAssociation",
-        backref="user",
-        lazy="joined",
-        collection_class=list,
-        cascade="all, delete",
+    roles: Mapped[List[Role]] = relationship(
+        "Role", secondary=user_role_association, back_populates="users", lazy="joined"
     )
     status = mapped_column(
         Enum(

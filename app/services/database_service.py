@@ -1,6 +1,12 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session as SQLAlchemySession
+from sqlalchemy.orm import (
+    sessionmaker,
+    declarative_base,
+    Session as SQLAlchemySession,
+    # DeclarativeBase,
+    # MappedAsDataclass,
+)
 from dotenv import load_dotenv
 
 # Load environment variables from the .env file
@@ -20,6 +26,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class for models
 Base = declarative_base()
+
+# TODO: Make all models dataclasses
+# class Base(DeclarativeBase, MappedAsDataclass)
+# pass
 
 
 # Function to create a new session
