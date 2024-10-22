@@ -1,6 +1,9 @@
 # Docker setup
 
-## To run, run: docker-compose
+## Just to RUN:
+`docker-compose up`
+
+## To BUILD, run: docker-compose
 `docker-compose up --build`
 
 ## To reset
@@ -16,18 +19,27 @@ docker-compose up --build
 
 # Alembic
 
+## To run any of the commands, but inside the docker container:
+`docker-compose exec server YOUR COMMAND`
+
 ## Apply all pending migrations to the database schema (locally)
 `alembic upgrade head`
 
 ## Running this from INSIDE the docker container
-`docker-compose exec server alembic upgrade head`
+`alembic upgrade head`
 
-## OR running from the machine, but outside the docker container
+## Baseline schema command form outside local docker
+`DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic revision --autogenerate -m "baseline schema"`
+
+## Upgrade head command from the machine, but outside the docker container
 `DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic upgrade head`
+
+## Downgrade through outside docker container
+`DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic downgrade -1`
+
 
 ## Generate migration script
 `alembic revision --autogenerate -m "baseline schema"`
-`docker-compose exec server alembic revision --autogenerate -m "baseline schema"`
 
 ## Upgrade database to a specifiv revision
 `alembic upgrade <revision_id>`
@@ -43,9 +55,10 @@ OR
 ## Show the current revision applied to the database
 `alembic current`
 
+## Other commands
 `alembic show <revision_id>`
 `alembic stamp head`
 `alembic check`
 
 ## Resetting alembic while in development  
-- manually delete all versions and generate a baseline schema (with initial command)
+- manually delete all versions and generate a baseline schema (with reset command)

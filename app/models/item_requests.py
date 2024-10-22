@@ -8,7 +8,7 @@ from enum import Enum as PyEnum
 from app.models.associations import item_request_parts_association
 
 if TYPE_CHECKING:
-    from .item import Item
+    from .items import Items
 
 
 class ItemRequestStatusEnum(PyEnum):
@@ -16,8 +16,8 @@ class ItemRequestStatusEnum(PyEnum):
     ARCHIVED = "archived"
 
 
-class ItemRequest(Base):
-    __tablename__ = "item_request"
+class ItemRequests(Base):
+    __tablename__ = "item_requests"
 
     # Core Fields
     id = mapped_column(
@@ -30,16 +30,17 @@ class ItemRequest(Base):
     # Associated Equipment
     item_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("item.id", name="fk_item_request_item_id"),
+        ForeignKey("items.id", name="fk_item_request_item_id"),
         nullable=True,
     )
-    item: Mapped[Optional["Item"]] = relationship(
-        "Item", back_populates="item_requests"
+
+    item: Mapped[Optional["Items"]] = relationship(
+        "Items", back_populates="item_requests"
     )
 
     # Requested Parts
-    parts: Mapped[list["Item"]] = relationship(
-        "Item", secondary=item_request_parts_association
+    parts: Mapped[list["Items"]] = relationship(
+        "Items", secondary=item_request_parts_association
     )
 
     # Metadata

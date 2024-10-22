@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import String, Integer, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.services.database_service import Base
-from app.models import Item
 from enum import Enum as PyEnum
 import uuid
+
+if TYPE_CHECKING:
+    from .items import Items
+    from .plants import Plants
 
 
 class QRCodeStatus(PyEnum):
@@ -12,8 +16,8 @@ class QRCodeStatus(PyEnum):
     ARCHIVED = "archived"
 
 
-class QRCode(Base):
-    __tablename__ = "qr_code"
+class QRCodes(Base):
+    __tablename__ = "qr_codes"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
@@ -26,10 +30,17 @@ class QRCode(Base):
         nullable=False,
     )
 
-    # ForeignKey required since this is a many-to-one relationship
+    # Associations
     item_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("item.id", name="fk_qr_code_item_id"),
+        ForeignKey("items.id", name="fk_qr_code_item_id"),
         nullable=True,
     )
-    item: Mapped[Item] = relationship("Item")
+
+    item: Mapped["Items"] = relationship("Items")
+
+    plant_id = mapped_column(
+        UUID(as_uuid=True), ForeignKey("plants.id", ondelete="CASCADE"), nullable=False
+    )
+
+    plant: Mapped["Plants"] = relationship("Plants", back_populates="qr_codes")

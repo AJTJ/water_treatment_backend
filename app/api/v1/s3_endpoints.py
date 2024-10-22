@@ -8,7 +8,7 @@ router: APIRouter = APIRouter()
 MAX_FILE_SIZE = 1 * 1024 * 1024  # 1 MB
 
 
-@router.post("/upload/")
+@router.post("/upload")
 async def upload_file(file: UploadFile = File(...)) -> Dict[str, str]:
     """
     Upload a file to S3 and return the CloudFront URL.

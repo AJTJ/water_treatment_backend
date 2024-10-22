@@ -10,7 +10,7 @@ from .associations import (
 )
 
 if TYPE_CHECKING:
-    from app.models.item import Item
+    from app.models.items import Items
 
 
 class ItemTypeEnum(PyEnum):
@@ -20,14 +20,14 @@ class ItemTypeEnum(PyEnum):
     TOOL = "tool"
 
 
-class ItemType(Base):
-    __tablename__ = "item_type"
+class ItemTypes(Base):
+    __tablename__ = "item_types"
 
     id = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     name = mapped_column(Enum(ItemTypeEnum, native_enum=False), nullable=False)
 
-    items: Mapped[list["Item"]] = relationship(
-        "Item", secondary=items_item_types_association, back_populates="item_types"
+    items: Mapped[list["Items"]] = relationship(
+        "Items", secondary=items_item_types_association, back_populates="item_types"
     )

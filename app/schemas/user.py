@@ -1,37 +1,36 @@
 from typing import List
+import uuid
 from pydantic import BaseModel
 from datetime import datetime
 
-from app.models.user import UserRole, UserStatus
+from app.models.users import UserRoleEnum, UserStatus
 
 
 # USER ROLE ASSOCIATION
-class UserRoleAssociationSchema(BaseModel):
-    user_id: str
-    role: UserRole
+
+
+class Role(BaseModel):
+    id: uuid.UUID
+    name: UserRoleEnum
 
 
 class UserBase(BaseModel):
     id: str
     user_name: str
     email: str
-    roles: List[UserRole]
+    roles: List[Role]
+
+    # Metadata
     status: UserStatus
-    last_login: datetime
+    created_at: datetime
+    updated_at: datetime
 
 
 # CREATE USER
 class UserCreateRequest(BaseModel):
     user_name: str
     email: str
-    roles: List[UserRole]
-
-
-class UserCreate(BaseModel):
-    id: str
-    user_name: str
-    email: str
-    roles: List[UserRoleAssociationSchema]
+    roles: List[UserRoleEnum]
 
 
 class UserCreateResponse(BaseModel):
@@ -44,7 +43,7 @@ class UserCreateResponse(BaseModel):
 class UserUpdate(BaseModel):
     user_name: str
     email: str
-    roles: List[UserRoleAssociationSchema]
+    roles: List[UserRoleEnum]
 
 
 # LOGIN/LOGOUT
@@ -75,13 +74,3 @@ class RefreshResponse(BaseModel):
 
 class CognitoLoginResponse(BaseModel):
     sub: str
-
-
-# USER ROLES
-class UserRoleAssociationBase(BaseModel):
-    user_id: str
-    role: UserRole
-
-
-class UserRoleAssociationCreate(UserRoleAssociationBase):
-    pass

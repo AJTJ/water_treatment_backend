@@ -4,26 +4,19 @@ from sqlalchemy.orm import Session
 from sqlalchemy import pool
 from alembic import context
 from app.models import *  # Ensure all models are imported
-from app.models.user import Role
+from app.models.users import Roles
 from app.services.database_service import Base  # Import the Base class
 from app.services.database_service import DATABASE_URL  # Import the DATABASE_URL
 
-DEFAULT_ROLES = [
-    {
-        "name": "super_admin",
-    },
-    {"name": "system_admin"},
-    {"name": "admin"},
-    {"name": "operator"},
-]
+DEFAULT_ROLES = [{"name": role.value} for role in UserRoleEnum]
 
 
 def seed_roles(session: Session) -> None:
     """Seed default roles if they don't already exist."""
     for role_data in DEFAULT_ROLES:
-        role = session.query(Role).filter_by(name=role_data["name"]).first()
+        role = session.query(Roles).filter_by(name=role_data["name"]).first()
         if not role:
-            new_role = Role(name=role_data["name"])
+            new_role = Roles(name=UserRoleEnum(role_data["name"]))
             session.add(new_role)
     session.commit()
 

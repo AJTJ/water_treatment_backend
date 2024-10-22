@@ -21,9 +21,9 @@ from app.schemas.item_and_item_request import (
 from app.schemas.failed_sync import FailedSyncCreate
 
 # Schemas
-from app.models.failed_sync import FailedSync
-from app.models.item_request import (
-    ItemRequest,
+from app.models.failed_syncs import FailedSyncs
+from app.models.item_requests import (
+    ItemRequests,
     ItemRequestStatusEnum,
 )
 
@@ -38,7 +38,7 @@ def create_item_request(
     db: Session = Depends(get_session),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ) -> ItemRequestResponse:
-    db_request = ItemRequest(**item_request.model_dump())
+    db_request = ItemRequests(**item_request.model_dump())
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
@@ -64,7 +64,7 @@ def create_item_request(
             request_data=request_and_item.model_dump(),
         )
 
-        failed_sync = FailedSync(**failed_sync_create.model_dump())
+        failed_sync = FailedSyncs(**failed_sync_create.model_dump())
         db.add(failed_sync)
         db.commit()
         # Add the background task to retry syncs
@@ -80,7 +80,7 @@ def sync_with_retry(request_data: ItemRequestWithItemInfo) -> None:
 
 def retry_failed_syncs(db: Session = Depends(get_session)) -> None:
     # Get all failed syncs
-    failed_syncs: List[FailedSync] = db.query(FailedSync).all()
+    failed_syncs: List[FailedSyncs] = db.query(FailedSyncs).all()
 
     for sync in failed_syncs:
         try:
@@ -106,16 +106,16 @@ def get_many_item_requests(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 ) -> ManyItemRequestsResponse:
     requests = (
-        db.query(ItemRequest)
-        .filter(ItemRequest.status == ItemRequestStatusEnum.ACTIVE)
+        db.query(ItemRequests)
+        .filter(ItemRequests.status == ItemRequestStatusEnum.ACTIVE)
         .offset(skip)
         .limit(limit)
         .all()
     )
 
     total = (
-        db.query(ItemRequest)
-        .filter(ItemRequest.status == ItemRequestStatusEnum.ACTIVE)
+        db.query(ItemRequests)
+        .filter(ItemRequests.status == ItemRequestStatusEnum.ACTIVE)
         .count()
     )
 
@@ -130,10 +130,10 @@ def get_item_request(
     request_id: UUID, db: Session = Depends(get_session)
 ) -> ItemRequestResponse:
     item_request = (
-        db.query(ItemRequest)
+        db.query(ItemRequests)
         .filter(
-            ItemRequest.id == request_id,
-            ItemRequest.status == ItemRequestStatusEnum.ACTIVE,
+            ItemRequests.id == request_id,
+            ItemRequests.status == ItemRequestStatusEnum.ACTIVE,
         )
         .first()
     )
@@ -151,10 +151,10 @@ def update_item_request(
     db: Session = Depends(get_session),
 ) -> ItemRequestResponse:
     item_request = (
-        db.query(ItemRequest)
+        db.query(ItemRequests)
         .filter(
-            ItemRequest.id == request_id,
-            ItemRequest.status == ItemRequestStatusEnum.ACTIVE,
+            ItemRequests.id == request_id,
+            ItemRequests.status == ItemRequestStatusEnum.ACTIVE,
         )
         .first()
     )
@@ -177,10 +177,10 @@ def delete_item_request(
     request_id: UUID, db: Session = Depends(get_session)
 ) -> ItemRequestResponse:
     item_request = (
-        db.query(ItemRequest)
+        db.query(ItemRequests)
         .filter(
-            ItemRequest.id == request_id,
-            ItemRequest.status == ItemRequestStatusEnum.ACTIVE,
+            ItemRequests.id == request_id,
+            ItemRequests.status == ItemRequestStatusEnum.ACTIVE,
         )
         .first()
     )

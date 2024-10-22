@@ -1,98 +1,37 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from typing import Annotated, Dict, Any
-from app.models.user import User
-from app.services.auth_service import cognito_client
+from typing import Callable, List
+from app.models.users import Users, UserRoleEnum
+from app.services.auth_service import validate_cognito_token
 from app.services.database_service import get_session
-import jwt
-
-# Define the OAuth2 scheme to extract the access token from the request
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[Session, Depends(get_session)],
-) -> User:
-    """
-    Retrieves the authenticated user based on the provided Cognito access token.
+security = HTTPBearer()
 
-    Args:
-        token (str): The access token extracted from the request.
-        db (Session): SQLAlchemy session for querying the database.
 
-    Returns:
-        User: The authenticated user object.
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+    db: Session = Depends(get_session),
+) -> Users:
+    access_token = credentials.credentials
+    user_sub = validate_cognito_token(access_token)
 
-    Raises:
-        HTTPException: If the user is not found or the token is invalid.
-    """
-    try:
-        # Decode the access token to get the 'sub' (user ID) claim
-        payload = decode_access_token(token)
-        user_id: str = payload.get("sub")
+    # Query the user from the database by the Cognito 'sub'
+    user = db.query(Users).filter(Users.id == user_sub).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
-        if not user_id:
+
+def has_role(roles: List[UserRoleEnum]) -> Callable[[Users], Users]:
+    def role_checker(user: Users = Depends(get_current_user)) -> Users:
+
+        user_roles = {role.name for role in user.roles}
+        if not any(role in user_roles for role in roles):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: User ID is missing",
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=403, detail="Access forbidden: insufficient permissions"
             )
-
-        # Query the user from the database
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
         return user
 
-    except cognito_client.exceptions.NotAuthorizedException:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Authentication error: {str(e)}",
-        )
-
-
-SECRET_KEY = "your-cognito-jwt-secret"
-ALGORITHM = "RS256"  # Cognito typically uses RS256, adjust if necessary
-
-
-def decode_access_token(token: str) -> Dict[str, Any]:
-    """
-    Decodes the JWT access token using Cognito's secret key.
-
-    Args:
-        token (str): The JWT token to decode.
-
-    Returns:
-        Dict[str, Any]: The decoded token payload.
-
-    Raises:
-        HTTPException: If the token is invalid or expired.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return role_checker

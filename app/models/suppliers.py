@@ -6,14 +6,13 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.services.database_service import Base
 
 if TYPE_CHECKING:
-    from .item import Item
+    from .items import Items
 
-# from .item import Item
 from .associations import items_suppliers_association
 
 
-class Supplier(Base):
-    __tablename__ = "supplier"
+class Suppliers(Base):
+    __tablename__ = "suppliers"
 
     id = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
@@ -21,8 +20,8 @@ class Supplier(Base):
     name = mapped_column(String, nullable=False)
 
     # Mapped implies that it is mapped to a column
-    items: Mapped[list["Item"]] = relationship(
-        "Item",
+    items: Mapped[list["Items"]] = relationship(
+        "Items",
         secondary=items_suppliers_association,
         back_populates="suppliers",
     )

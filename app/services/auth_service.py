@@ -193,7 +193,8 @@ def refresh_user_token(refresh_token: str, response: Response) -> RefreshRespons
         raise Exception(f"Error refreshing token: {str(e)}")
 
 
-def create_cognito_user(user_name: str, email: str) -> UserCreateResponse:
+# NOTE: Currently using only email based login only
+def create_cognito_user(email: str) -> UserCreateResponse:
     try:
         if USER_POOL_ID is None or CLIENT_ID is None:
             raise ValueError(
@@ -202,7 +203,7 @@ def create_cognito_user(user_name: str, email: str) -> UserCreateResponse:
 
         response: AdminCreateUserResponseTypeDef = cognito_client.admin_create_user(
             UserPoolId=USER_POOL_ID,
-            Username=user_name,
+            Username=email,
             UserAttributes=[
                 {"Name": "email", "Value": email},
             ],
@@ -234,3 +235,43 @@ def create_cognito_user(user_name: str, email: str) -> UserCreateResponse:
         return UserCreateResponse(user_name=_user_name, email=_email, sub=_sub)
     except ClientError as e:
         raise Exception(f"Error creating user: {str(e)}")
+
+
+def validate_cognito_token(access_token: str) -> str:
+    """Validate the access token via Cognito and return the user sub."""
+    try:
+        response = cognito_client.get_user(AccessToken=access_token)
+        return response["Username"]  # Cognito 'sub' is returned as the Username
+
+    except cognito_client.exceptions.NotAuthorizedException:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    except cognito_client.exceptions.UserNotFoundException:
+        raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to validate token: {str(e)}"
+        )
+
+
+def global_revoke_token(token: str) -> None:
+    """Revoke the refresh token."""
+    try:
+        cognito_client.global_sign_out(AccessToken=token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to revoke token: {str(e)}"
+        ) from e
+
+
+def session_revoke_token(token: str) -> None:
+    if CLIENT_ID is None:
+        raise ValueError(
+            "Cognito User Pool ID or Client ID not set in environment variables."
+        )
+
+    try:
+        cognito_client.revoke_token(Token=token, ClientId=CLIENT_ID)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to revoke token: {str(e)}"
+        ) from e

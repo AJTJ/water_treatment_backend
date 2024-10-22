@@ -1,46 +1,49 @@
 # app/models/__init__.py
-from app.models.item import (
-    Item,
+from app.models.items import (
+    Items,
     ItemStatusEnum,
 )
-from app.models.item_request import ItemRequest, ItemRequestStatusEnum
-from app.models.qr_code import QRCode, QRCodeStatus
-from app.models.failed_sync import FailedSync
-from app.models.user import User, UserStatus, UserRole, Role
-from app.models.supplier import Supplier
+from app.models.item_requests import ItemRequests, ItemRequestStatusEnum
+from app.models.qr_codes import QRCodes, QRCodeStatus
+from app.models.failed_syncs import FailedSyncs
+from app.models.users import Users, UserStatus, UserRoleEnum, Roles
+from app.models.suppliers import Suppliers
 from app.models.associations import (
     items_suppliers_association,
     items_item_types_association,
     items_parts_association,
-    user_role_association,
+    users_roles_association,
 )
-from app.models.item_type import ItemType, ItemTypeEnum
+from app.models.item_types import ItemTypes, ItemTypeEnum
+from app.models.plants import Plants
 
 __all__ = [
     # Associations
     "items_suppliers_association",
     "items_item_types_association",
     "items_parts_association",
-    "user_role_association",
+    "users_roles_association",
     # FailedSync
-    "FailedSync",
+    "FailedSyncs",
     # Item Request
-    "ItemRequest",
+    "ItemRequests",
     "ItemRequestStatusEnum",
     # ItemType
-    "ItemType",
+    "ItemTypes",
     "ItemTypeEnum",
     # Item
-    "Item",
+    "Items",
     "ItemStatusEnum",
     # QRCode
-    "QRCode",
+    "QRCodes",
     "QRCodeStatus",
     # Supplier
-    "Supplier",
+    "Suppliers",
     # User
-    "User",
-    "UserRole",
+    "Users",
+    "UserRoleEnum",
     "UserStatus",
-    "Role",
+    "Roles",
+    # Plant
+    "Plants",
 ]

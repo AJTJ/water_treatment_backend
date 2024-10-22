@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from typing import List
 from uuid import UUID
-from app.models.item import Item
-from app.models.qr_code import QRCode, QRCodeStatus  # SQLAlchemy model
+from app.models.items import Items
+from app.models.qr_codes import QRCodes, QRCodeStatus  # SQLAlchemy model
 from app.schemas.qr_code import (
     QRCodeQueryParams,
     QRCodeResponseWithItem,
@@ -31,12 +31,12 @@ def create_batch_qr_codes(
         )
 
     # Get the current highest batch number
-    max_batch_number = db.query(func.max(QRCode.batch_number)).scalar() or 0
+    max_batch_number = db.query(func.max(QRCodes.batch_number)).scalar() or 0
 
     qr_codes: List[QRCodeResponseWithItem] = []
     for i in range(number_of_qr_codes):
         new_batch_number: int = max_batch_number + 1 + i
-        qr_code = QRCode()
+        qr_code = QRCodes()
         qr_code.status = QRCodeStatus.ACTIVE
         db.add(qr_code)
         db.commit()
@@ -60,20 +60,20 @@ def get_many_qr_codes(
     db: Session = Depends(get_session),
 ) -> QRCodeResponse:
 
-    query = db.query(QRCode).filter(QRCode.status == QRCodeStatus.ACTIVE)
+    query = db.query(QRCodes).filter(QRCodes.status == QRCodeStatus.ACTIVE)
 
     if query_params.min_batch_number is not None:
-        query = query.filter(QRCode.batch_number >= query_params.min_batch_number)
+        query = query.filter(QRCodes.batch_number >= query_params.min_batch_number)
     if query_params.max_batch_number is not None:
-        query = query.filter(QRCode.batch_number <= query_params.max_batch_number)
+        query = query.filter(QRCodes.batch_number <= query_params.max_batch_number)
 
     total_qr_codes = query.count()
 
-    item_alias = aliased(Item)
+    item_alias = aliased(Items)
 
     qr_codes_with_item = (
-        query.outerjoin(item_alias, QRCode.item_id == item_alias.id)
-        .with_entities(QRCode, item_alias.name.label("item_name"))
+        query.outerjoin(item_alias, QRCodes.item_id == item_alias.id)
+        .with_entities(QRCodes, item_alias.name.label("item_name"))
         .offset(query_params.skip)
         .limit(query_params.limit)
         .all()
@@ -93,8 +93,8 @@ def get_qr_code(
     qr_code_id: UUID, db: Session = Depends(get_session)
 ) -> QRCodeResponseWithItem:
     qr_code = (
-        db.query(QRCode)
-        .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
+        db.query(QRCodes)
+        .filter(QRCodes.id == qr_code_id, QRCodes.status == QRCodeStatus.ACTIVE)
         .first()
     )
     if qr_code is None:
@@ -111,8 +111,8 @@ def update_qr_code(
     db: Session = Depends(get_session),
 ) -> QRCodeResponseWithItem:
     qr_code = (
-        db.query(QRCode)
-        .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
+        db.query(QRCodes)
+        .filter(QRCodes.id == qr_code_id, QRCodes.status == QRCodeStatus.ACTIVE)
         .first()
     )
     if qr_code is None:
@@ -122,7 +122,7 @@ def update_qr_code(
 
     # unnecessary?
     if qr_code_update.item_id:
-        item = db.query(Item).filter(Item.id == qr_code_update.item_id).first()
+        item = db.query(Items).filter(Items.id == qr_code_update.item_id).first()
         if item is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Item not found"
@@ -140,8 +140,8 @@ def delete_qr_code(
     qr_code_id: UUID, db: Session = Depends(get_session)
 ) -> QRCodeResponseWithItem:
     qr_code = (
-        db.query(QRCode)
-        .filter(QRCode.id == qr_code_id, QRCode.status == QRCodeStatus.ACTIVE)
+        db.query(QRCodes)
+        .filter(QRCodes.id == qr_code_id, QRCodes.status == QRCodeStatus.ACTIVE)
         .first()
     )
     if qr_code is None:

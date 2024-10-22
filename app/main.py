@@ -10,6 +10,26 @@ setup_logging()
 
 app: FastAPI = FastAPI(title="Water Treatment API", version="1.0")
 
+# Middleware for handling CORS
+app.add_middleware(
+    CORSMiddleware,
+    # allow_origins=[
+    #     "http://localhost:3000"
+    # ],  # Change this to specific domains in production
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(response: Response) -> Response:
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
 
 # Versioned endpoints
 app.include_router(item.router, prefix="/v1/item", tags=["item"])
@@ -22,15 +42,6 @@ app.include_router(auth.router, prefix="/v1/auth", tags=["auth"])
 
 # Unversioned endpoints (no prefix)
 app.include_router(qr_code_unversioned.router, tags=["qr_code_unversioned"])
-
-# Middleware for handling CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Change this to specific domains in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.middleware("http")

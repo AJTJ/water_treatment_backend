@@ -1,19 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+
+# from app.core.security import has_role
 from app.schemas.user import (
     LogoutResponse,
     UserBase,
     UserCreateRequest,
-    UserCreate,
     LoginRequest,
     RefreshResponse,
-    UserRoleAssociationCreate,
-    UserRoleAssociationSchema,
 )
-from app.models.user import User
+from app.models.users import Roles, Users
 from app.services.auth_service import (
     create_cognito_user,
     login_cognito_user,
     refresh_user_token,
+    session_revoke_token,
 )
 from app.services.database_service import get_session
 from sqlalchemy.orm import Session
@@ -31,7 +31,7 @@ def login(
     cognito_response = login_cognito_user(request.email, request.password, response)
 
     # Check if the user exists in the complementary database using the Cognito sub
-    user = db.query(User).filter(User.id == cognito_response.sub).first()
+    user = db.query(Users).filter(Users.id == cognito_response.sub).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -47,74 +47,53 @@ def refresh_token(
     return refresh_user_token(refresh_token, response)
 
 
-@router.post("/create-user/")
-async def create_user_endpoint(
+# dependencies=[Depends(has_role([UserRoleEnum.ADMIN]))]
+@router.post("/create-user")
+async def create_user(
     user_create_request: UserCreateRequest,
     db: Session = Depends(get_session),
 ) -> UserBase:
-    response = create_cognito_user(
-        user_create_request.user_name, user_create_request.email
-    )
-    if not response:
-        raise HTTPException(status_code=400, detail="Error creating user")
+    try:
+        print(f"Request Data: {user_create_request}")  # Log incoming data
 
-    roles_associations = [
-        UserRoleAssociationCreate(user_id=response.sub, role=role)
-        for role in user_create_request.roles
-    ]
+        created_cognito_user = create_cognito_user(user_create_request.email)
+        if not created_cognito_user:
+            raise HTTPException(status_code=400, detail="Error creating user")
 
-    roles = [
-        UserRoleAssociationSchema(**role.model_dump()) for role in roles_associations
-    ]
+        request_roles = [role.value for role in user_create_request.roles]
 
-    user_create = UserCreate(
-        id=response.sub,
-        user_name=user_create_request.user_name,
-        email=user_create_request.email,
-        roles=roles,
-    )
+        roles = db.query(Roles).filter(Roles.name.in_(request_roles)).all()
 
-    user = User(**user_create.model_dump())
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+        if not roles:
+            raise HTTPException(status_code=404, detail="Invalid roles provided")
 
-    if not user:
-        raise HTTPException(status_code=404, detail="New User not found")
-    return UserBase.model_validate(user)
+        user_data = user_create_request.model_dump()
+        user_data["id"] = created_cognito_user.sub
+        user = Users(**user_data)
+        user.roles = roles
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="New User not found")
+        return UserBase.model_validate(user)
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@router.post("/logout/")
-async def logout(response: Response) -> LogoutResponse:
+@router.post("/logout")
+async def logout(request: Request, response: Response) -> LogoutResponse:
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="No refresh token provided")
+
+    session_revoke_token(refresh_token)
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
     return LogoutResponse(message="Logged out successfully")
-
-
-# @router.put("/update-user/{user_id}")
-# def update_user(
-#     user_id: str,
-#     user_update_request: UserUpdateRequest,
-#     db: Session = Depends(get_session),
-# ) -> User:
-#     # Check if the user exists
-#     user = db.query(User).filter(User.id == user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     # Update the user's attributes
-#     user.user_name = user_update_request.user_name
-#     user.email = user_update_request.email
-
-#     # Update the user's roles
-#     roles_associations = [
-#         UserRoleAssociationCreate(user_id=user_id, role=role)
-#         for role in user_update_request.roles
-#     ]
-#     roles = [UserRoleAssociation(**role.model_dump()) for role in roles_associations]
-#     user.roles = roles
-
-#     db.commit()
-#     db.refresh(user)
-
-#     return user

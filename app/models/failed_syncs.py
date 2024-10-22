@@ -6,7 +6,7 @@ from sqlalchemy.orm import mapped_column
 import uuid
 
 
-class FailedSync(Base):
+class FailedSyncs(Base):
     __tablename__ = "failed_syncs"
 
     id = mapped_column(

@@ -1,7 +1,8 @@
 import logging
 import logging.config
+from typing import Dict, Any
 
-LOGGING_CONFIG = {
+LOGGING_CONFIG: Dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {

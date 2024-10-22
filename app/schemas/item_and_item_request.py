@@ -2,15 +2,15 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional, Self
 import uuid
-from app.models.item import ItemStatusEnum
-from app.models.item_type import ItemTypeEnum
+from app.models.items import ItemStatusEnum
+from app.models.item_types import ItemTypeEnum
 from app.schemas.supplier import SupplierBaseSimple
 
 
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-from app.models.item_request import ItemRequestStatusEnum
+from app.models.item_requests import ItemRequestStatusEnum
 from app.schemas.item_request_parts import PartRequest
 
 

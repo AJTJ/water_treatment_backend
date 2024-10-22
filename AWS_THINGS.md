@@ -1,4 +1,11 @@
-s3
+## Cognito user pool
+- https://us-east-2.console.aws.amazon.com/cognito/v2/idp/user-pools/us-east-2_P2utY5LE6/users?region=us-east-2
+
+## IAM Permissions
+- https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-2#/users/details/water-treatment-dev-user?section=permissions
+
+
+## s3
 - Set up a bucket
   - Almost ALL default settings
   - GET, HEAD is fine if all you're doing is serving files

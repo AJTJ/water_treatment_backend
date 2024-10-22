@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
-from app.models.item import Item, ItemStatusEnum
+from app.models.items import Items, ItemStatusEnum
 from app.schemas.item_and_item_request import (
     ItemBase,
     ItemCreate,
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post("", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(item: ItemCreate, db: Session = Depends(get_session)) -> ItemResponse:
-    db_item = Item(**item.model_dump())
+    db_item = Items(**item.model_dump())
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
@@ -29,13 +29,13 @@ def get_many_items(
 ) -> ManyItemsResponse:
     try:
         items = (
-            db.query(Item)
-            .filter(Item.status == ItemStatusEnum.ACTIVE)
+            db.query(Items)
+            .filter(Items.status == ItemStatusEnum.ACTIVE)
             .offset(skip)
             .limit(limit)
             .all()
         )
-        count = db.query(Item).filter(Item.status == ItemStatusEnum.ACTIVE).count()
+        count = db.query(Items).filter(Items.status == ItemStatusEnum.ACTIVE).count()
 
         return ManyItemsResponse(
             total=count,
@@ -50,8 +50,8 @@ def get_many_items(
 @router.get("/{item_id}", response_model=ItemResponse)
 def get_item(item_id: UUID, db: Session = Depends(get_session)) -> ItemResponse:
     item = (
-        db.query(Item)
-        .filter(Item.id == item_id, Item.status == ItemStatusEnum.ACTIVE)
+        db.query(Items)
+        .filter(Items.id == item_id, Items.status == ItemStatusEnum.ACTIVE)
         .first()
     )
     if item is None:
@@ -69,8 +69,8 @@ def update_item(
 ) -> ItemResponse:
 
     item = (
-        db.query(Item)
-        .filter(Item.id == item_id, Item.status == ItemStatusEnum.ACTIVE)
+        db.query(Items)
+        .filter(Items.id == item_id, Items.status == ItemStatusEnum.ACTIVE)
         .first()
     )
     if item is None:
@@ -88,8 +88,8 @@ def update_item(
 @router.delete("/{item_id}", response_model=ItemResponse)
 def delete_item(item_id: UUID, db: Session = Depends(get_session)) -> ItemResponse:
     item = (
-        db.query(Item)
-        .filter(Item.id == item_id, Item.status == ItemStatusEnum.ACTIVE)
+        db.query(Items)
+        .filter(Items.id == item_id, Items.status == ItemStatusEnum.ACTIVE)
         .first()
     )
     if item is None:
