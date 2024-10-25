@@ -7,16 +7,21 @@ from app.models import *  # Ensure all models are imported
 from app.models.users import Roles
 from app.services.database_service import Base  # Import the Base class
 from app.services.database_service import DATABASE_URL  # Import the DATABASE_URL
+import logging
 
-DEFAULT_ROLES = [{"name": role.value} for role in UserRoleEnum]
+DEFAULT_ROLES = [{"name": role} for role in UserRoleEnum]
 
 
 def seed_roles(session: Session) -> None:
     """Seed default roles if they don't already exist."""
     for role_data in DEFAULT_ROLES:
+        logging.info(f"Seeding role: {role_data['name']}")  # Log the role
+
+        # Use the enum value directly in the filter
         role = session.query(Roles).filter_by(name=role_data["name"]).first()
         if not role:
-            new_role = Roles(name=UserRoleEnum(role_data["name"]))
+            # Create the role using the enum value
+            new_role = Roles(name=role_data["name"])
             session.add(new_role)
     session.commit()
 

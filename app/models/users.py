@@ -11,16 +11,16 @@ if TYPE_CHECKING:
     from .plants import Plants
 
 
-class UserRoleEnum(PyEnum):
-    SUPER_ADMIN = "super_admin"
-    SYSTEM_ADMIN = "system_admin"
-    ADMIN = "admin"
-    OPERATOR = "operator"
+class UserRoleEnum(str, PyEnum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    SYSTEM_ADMIN = "SYSTEM_ADMIN"
+    ADMIN = "ADMIN"
+    OPERATOR = "OPERATOR"
 
 
-class UserStatus(PyEnum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
+class UserStatus(str, PyEnum):
+    ACTIVE = "ACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class Roles(Base):
@@ -44,6 +44,8 @@ class Roles(Base):
 
     def __init__(self, name: UserRoleEnum) -> None:
         self.name = name
+
+    model_config = {"from_attributes": True}
 
 
 class Users(Base):
@@ -82,3 +84,5 @@ class Users(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    model_config = {"from_attributes": True}

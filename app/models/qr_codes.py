@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from .plants import Plants
 
 
-class QRCodeStatus(PyEnum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
+class QRCodeStatus(str, PyEnum):
+    ACTIVE = "ACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class QRCodes(Base):

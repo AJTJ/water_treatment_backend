@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Table
 from sqlalchemy.dialects.postgresql import UUID
 from app.services.database_service import Base
-from enum import Enum as PyEnum
+from enum import Enum as PyEnum, auto
 
 
 items_suppliers_association = Table(
@@ -63,8 +63,8 @@ items_item_types_association = Table(
 
 
 class PartRequestUrgencyLevels(PyEnum):
-    urgent = "urgent"
-    not_urgent = "not_urgent"
+    urgent = auto()
+    not_urgent = auto()
 
 
 item_request_parts_association = Table(

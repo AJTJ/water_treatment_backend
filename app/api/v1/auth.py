@@ -11,12 +11,14 @@ from app.schemas.user import (
 from app.models.users import Roles, Users
 from app.services.auth_service import (
     create_cognito_user,
+    delete_cognito_user,
     login_cognito_user,
     refresh_user_token,
     session_revoke_token,
 )
 from app.services.database_service import get_session
 from sqlalchemy.orm import Session
+import time
 
 router = APIRouter()
 
@@ -47,12 +49,23 @@ def refresh_token(
     return refresh_user_token(refresh_token, response)
 
 
+# TEST ENDPOINT
+@router.get("/user/{user_id}", response_model=UserBase)
+def get_user(user_id: str, db: Session = Depends(get_session)) -> UserBase:
+    user = db.query(Users).filter(Users.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserBase.model_validate(user)
+
+
 # dependencies=[Depends(has_role([UserRoleEnum.ADMIN]))]
 @router.post("/create-user")
 async def create_user(
     user_create_request: UserCreateRequest,
     db: Session = Depends(get_session),
 ) -> UserBase:
+    created_cognito_user = None
+    # TODO: User is still being sent confirmation email even if the cognito user is deleted due to an error
     try:
         print(f"Request Data: {user_create_request}")  # Log incoming data
 
@@ -62,26 +75,41 @@ async def create_user(
 
         request_roles = [role.value for role in user_create_request.roles]
 
+        print(f"Request Roles: {request_roles}")
+
         roles = db.query(Roles).filter(Roles.name.in_(request_roles)).all()
+
+        print(f"Raw Roles: {roles}")
+        print(f"Roles Types: {[type(role) for role in roles]}")
+
+        if len(roles) != len(request_roles):
+            raise HTTPException(status_code=404, detail="Invalid roles provided")
 
         if not roles:
             raise HTTPException(status_code=404, detail="Invalid roles provided")
 
-        user_data = user_create_request.model_dump()
+        user_data = user_create_request.model_dump(exclude={"roles"})
         user_data["id"] = created_cognito_user.sub
         user = Users(**user_data)
         user.roles = roles
 
         db.add(user)
         db.commit()
-        db.refresh(user)
+        db.refresh(user, attribute_names=["roles"])
+
+        print(f"User created: {user}")  # Log created user
+        time.sleep(5)
+        delete_cognito_user(created_cognito_user.sub)
 
         if not user:
+            delete_cognito_user(created_cognito_user.sub)
             raise HTTPException(status_code=404, detail="New User not found")
         return UserBase.model_validate(user)
 
     except Exception as e:
         print(f"Error occurred: {e}")
+        if created_cognito_user:
+            delete_cognito_user(created_cognito_user.sub)
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal Server Error")
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.services.database_service import Base
-from enum import Enum as PyEnum
+from enum import Enum as PyEnum, auto
 
 from .associations import (
     items_suppliers_association,
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 
 class ItemStatusEnum(PyEnum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
+    ACTIVE = auto()
+    ARCHIVED = auto()
 
 
 class Items(Base):

@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from .items import Items
 
 
-class ItemRequestStatusEnum(PyEnum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
+class ItemRequestStatusEnum(str, PyEnum):
+    ACTIVE = "ACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class ItemRequests(Base):

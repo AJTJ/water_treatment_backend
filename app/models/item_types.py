@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     from app.models.items import Items
 
 
-class ItemTypeEnum(PyEnum):
-    EQUIPMENT = "equipment"
-    PART = "part"
-    CONSUMABLE = "consumable"
-    TOOL = "tool"
+class ItemTypeEnum(str, PyEnum):
+    EQUIPMENT = "EQUIPMENT"
+    PART = "PART"
+    CONSUMABLE = "CONSUMABLE"
+    TOOL = "TOOL"
 
 
 class ItemTypes(Base):

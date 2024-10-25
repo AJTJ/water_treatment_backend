@@ -17,6 +17,14 @@ docker-compose up --build
 - use `pip install -r requirements.txt` to update the requirements.txt
 
 
+# POSTGRESQL
+
+## Access database inside docker container
+`psql -h localhost -U water_treatment_user -d water_treatment_db `
+
+## check roles table
+`SELECT * FROM roles;`
+
 # Alembic
 
 ## To run any of the commands, but inside the docker container:
@@ -33,6 +41,9 @@ docker-compose up --build
 
 ## Upgrade head command from the machine, but outside the docker container
 `DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic upgrade head`
+
+## Remember to seed the database, as needed
+` python seed_database.py`
 
 ## Downgrade through outside docker container
 `DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic downgrade -1`

@@ -275,3 +275,17 @@ def session_revoke_token(token: str) -> None:
         raise HTTPException(
             status_code=500, detail=f"Failed to revoke token: {str(e)}"
         ) from e
+
+
+def delete_cognito_user(username: str) -> None:
+    """Delete a user from Cognito."""
+    try:
+        if USER_POOL_ID is None:
+            raise ValueError("Cognito User Pool ID not set in environment variables.")
+
+        cognito_client.admin_delete_user(
+            UserPoolId=USER_POOL_ID,
+            Username=username,
+        )
+    except ClientError as e:
+        raise Exception(f"Error deleting user: {str(e)}")
