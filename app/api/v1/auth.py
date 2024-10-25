@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from app.schemas.user import (
     LogoutResponse,
     UserBase,
+    UserBaseWithRelations,
     UserCreateRequest,
     LoginRequest,
     RefreshResponse,
@@ -50,12 +51,23 @@ def refresh_token(
 
 
 # TEST ENDPOINT
-@router.get("/user/{user_id}", response_model=UserBase)
-def get_user(user_id: str, db: Session = Depends(get_session)) -> UserBase:
-    user = db.query(Users).filter(Users.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserBase.model_validate(user)
+@router.get("/user/{email}", response_model=UserBaseWithRelations)
+def get_user(email: str, db: Session = Depends(get_session)) -> UserBaseWithRelations:
+    try:
+        user = db.query(Users).filter(Users.email == email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        print(f"User: {user}")
+
+        py_user = UserBaseWithRelations.model_validate(user)
+
+        print(f"Py User: {py_user}")
+        return py_user
+    except Exception as e:
+        print(f"Error occurred getting user: {e}")
+
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 # dependencies=[Depends(has_role([UserRoleEnum.ADMIN]))]

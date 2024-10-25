@@ -4,7 +4,7 @@ from sqlalchemy import String, Enum, DateTime, func
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from app.services.database_service import Base
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from .associations import users_roles_association, plants_users_association
 
 if TYPE_CHECKING:
@@ -26,6 +26,9 @@ class UserStatus(str, PyEnum):
 class Roles(Base):
     __tablename__ = "roles"
 
+    def __init__(self, name: UserRoleEnum) -> None:
+        self.name = name
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         nullable=False,
@@ -38,12 +41,9 @@ class Roles(Base):
     )
 
     # Backref to users with this role
-    users: Mapped[List["Users"]] = relationship(
+    users: Mapped[list["Users"]] = relationship(
         "Users", secondary=users_roles_association, back_populates="roles"
     )
-
-    def __init__(self, name: UserRoleEnum) -> None:
-        self.name = name
 
     model_config = {"from_attributes": True}
 
@@ -54,7 +54,7 @@ class Users(Base):
     id = mapped_column(String, nullable=False, unique=True, primary_key=True)
     user_name = mapped_column(String, nullable=False)
     email = mapped_column(String, nullable=False, unique=True)
-    roles: Mapped[List[Roles]] = relationship(
+    roles: Mapped[list[Roles]] = relationship(
         "Roles",
         secondary=users_roles_association,
         back_populates="users",
@@ -62,7 +62,7 @@ class Users(Base):
     )
 
     # Associations
-    plants: Mapped[List["Plants"]] = relationship(
+    plants: Mapped[list["Plants"]] = relationship(
         "Plants",
         secondary=plants_users_association,
         back_populates="users",

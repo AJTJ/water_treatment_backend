@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from typing import List
 from uuid import UUID
 from tenacity import retry, stop_after_attempt, wait_exponential
 from app.api.v1.item import get_item
@@ -10,13 +9,13 @@ from app.services.google_sheets_service import sync_to_google_sheet
 from app.core.logging_config import logger
 
 # Models
-from app.schemas.item_and_item_request import (
+from app.schemas.item_request import (
     ItemRequestCreate,
     ItemRequestResponse,
     ItemRequestUpdate,
     ItemRequestWithItemInfo,
+    ItemRequestWithRelations,
     ManyItemRequestsResponse,
-    ItemRequestBase,
 )
 from app.schemas.failed_sync import FailedSyncCreate
 
@@ -80,7 +79,7 @@ def sync_with_retry(request_data: ItemRequestWithItemInfo) -> None:
 
 def retry_failed_syncs(db: Session = Depends(get_session)) -> None:
     # Get all failed syncs
-    failed_syncs: List[FailedSyncs] = db.query(FailedSyncs).all()
+    failed_syncs: list[FailedSyncs] = db.query(FailedSyncs).all()
 
     for sync in failed_syncs:
         try:
@@ -121,7 +120,9 @@ def get_many_item_requests(
 
     return ManyItemRequestsResponse(
         total=total,
-        item_requests=[ItemRequestBase.model_validate(req) for req in requests],
+        item_requests=[
+            ItemRequestWithRelations.model_validate(req) for req in requests
+        ],
     )
 
 

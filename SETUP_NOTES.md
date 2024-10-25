@@ -21,7 +21,7 @@ docker-compose up --build
 
 ## Access database inside docker container
 `psql -h localhost -U water_treatment_user -d water_treatment_db `
-
+`water_treatment_pass`
 ## check roles table
 `SELECT * FROM roles;`
 
@@ -43,7 +43,7 @@ docker-compose up --build
 `DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic upgrade head`
 
 ## Remember to seed the database, as needed
-` python seed_database.py`
+`python seed_database.py`
 
 ## Downgrade through outside docker container
 `DATABASE_URL=postgresql+psycopg2://water_treatment_user:water_treatment_pass@localhost:5432/water_treatment_db alembic downgrade -1`

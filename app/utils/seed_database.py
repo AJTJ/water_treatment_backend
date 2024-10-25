@@ -1,9 +1,9 @@
+from app.models.plants import Plants
 from app.services.database_service import SessionLocal  # SQLAlchemy session
 from app.models.users import Roles, UserRoleEnum  # Models and Enums
 import logging
-from typing import List, Dict
 
-DEFAULT_ROLES: List[Dict[str, UserRoleEnum]] = [{"name": role} for role in UserRoleEnum]
+DEFAULT_ROLES: list[dict[str, UserRoleEnum]] = [{"name": role} for role in UserRoleEnum]
 
 
 def seed_roles() -> None:
@@ -19,6 +19,20 @@ def seed_roles() -> None:
 
         session.commit()
         logging.info("Seeding completed.")
+
+
+def seed_plant() -> None:
+    with SessionLocal() as session:
+        plant_name = "Plant 1"
+        new_plant: Plants = Plants(name=plant_name)
+        session.add(new_plant)
+        session.commit()
+        logging.info("Seeding completed.")
+
+
+def seed_database() -> None:
+    seed_roles()
+    seed_plant()
 
 
 if __name__ == "__main__":

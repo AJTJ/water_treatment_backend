@@ -1,15 +1,14 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 import uuid
 from pydantic import BaseModel
 from app.models.associations import PartRequestUrgencyLevels
 
 
-if TYPE_CHECKING:
-    from app.schemas.item_and_item_request import ItemBase
-
-
 class PartRequest(BaseModel):
     part_id: uuid.UUID
-    part: "ItemBase"
+    part: "ItemWithRelations"
     quantity: int
     urgency_level: PartRequestUrgencyLevels
+
+
+from app.schemas.item import ItemWithRelations

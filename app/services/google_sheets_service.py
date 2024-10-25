@@ -1,6 +1,6 @@
 import os  # Add import statement for os module
 
-from typing import Any, Dict
+from typing import Any
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
 
@@ -9,9 +9,8 @@ from googleapiclient.discovery import build  # type: ignore
 # from uuid import UUID
 from datetime import datetime
 import pytz
-from app.schemas.item_and_item_request import (
-    ItemRequestWithItemInfo,
-)
+
+from app.schemas.item_request import ItemRequestWithItemInfo
 
 
 def format_date(request_date: datetime, timezone: str = "America/Whitehorse") -> str:
@@ -54,7 +53,7 @@ def sync_to_google_sheet(request_data: ItemRequestWithItemInfo) -> None:
         ]
     ]
 
-    body: Dict[str, Any] = {"majorDimension": "ROWS", "values": values}
+    body: dict[str, Any] = {"majorDimension": "ROWS", "values": values}
 
     result = (
         service.spreadsheets()

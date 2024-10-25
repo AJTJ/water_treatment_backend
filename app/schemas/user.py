@@ -1,12 +1,9 @@
-from typing import List
+from __future__ import annotations
 import uuid
 from pydantic import BaseModel
 from datetime import datetime
-
 from app.models.users import UserRoleEnum, UserStatus
-
-
-# USER ROLE ASSOCIATION
+from pydantic import BaseModel
 
 
 class Role(BaseModel):
@@ -18,7 +15,6 @@ class UserBase(BaseModel):
     id: str
     user_name: str
     email: str
-    roles: List[Role]
 
     # Metadata
     status: UserStatus
@@ -26,11 +22,16 @@ class UserBase(BaseModel):
     updated_at: datetime
 
 
+class UserBaseWithRelations(UserBase):
+    plants: list[PlantBase]
+    roles: list[Role]
+
+
 # CREATE USER
 class UserCreateRequest(BaseModel):
     user_name: str
     email: str
-    roles: List[UserRoleEnum]
+    roles: list[UserRoleEnum]
 
 
 class UserCreateResponse(BaseModel):
@@ -43,7 +44,7 @@ class UserCreateResponse(BaseModel):
 class UserUpdate(BaseModel):
     user_name: str
     email: str
-    roles: List[UserRoleEnum]
+    roles: list[UserRoleEnum]
 
 
 # LOGIN/LOGOUT
@@ -74,3 +75,6 @@ class RefreshResponse(BaseModel):
 
 class CognitoLoginResponse(BaseModel):
     sub: str
+
+
+from app.schemas.plant import PlantBase

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
-from typing import List
 from uuid import UUID
 from app.models.items import Items
 from app.models.qr_codes import QRCodes, QRCodeStatus  # SQLAlchemy model
@@ -18,12 +17,12 @@ router = APIRouter()
 
 @router.post(
     "/batch",
-    response_model=List[QRCodeResponseWithItem],
+    response_model=list[QRCodeResponseWithItem],
     status_code=status.HTTP_201_CREATED,
 )
 def create_batch_qr_codes(
     number_of_qr_codes: int, db: Session = Depends(get_session)
-) -> List[QRCodeResponseWithItem]:
+) -> list[QRCodeResponseWithItem]:
     if number_of_qr_codes <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -33,7 +32,7 @@ def create_batch_qr_codes(
     # Get the current highest batch number
     max_batch_number = db.query(func.max(QRCodes.batch_number)).scalar() or 0
 
-    qr_codes: List[QRCodeResponseWithItem] = []
+    qr_codes: list[QRCodeResponseWithItem] = []
     for i in range(number_of_qr_codes):
         new_batch_number: int = max_batch_number + 1 + i
         qr_code = QRCodes()
