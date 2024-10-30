@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, Enum, ForeignKey, Integer, Table
 from sqlalchemy.dialects.postgresql import UUID
 from app.services.database_service import Base
 from enum import Enum as PyEnum, auto
@@ -98,36 +98,41 @@ item_request_parts_association = Table(
     ),
 )
 
-users_roles_association = Table(
-    "users_roles_association",
-    Base.metadata,
-    Column(
-        "user_id",
-        String,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    Column(
-        "role_id",
-        UUID(as_uuid=True),
-        ForeignKey("roles.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
+# users_roles_association = Table(
+#     "users_roles_association",
+#     Base.metadata,
+#     Column(
+#         "user_id",
+#         String,
+#         ForeignKey("users.id", ondelete="CASCADE"),
+#         primary_key=True,
+#     ),
+#     Column(
+#         "role_id",
+#         UUID(as_uuid=True),
+#         ForeignKey("roles.id", ondelete="CASCADE"),
+#         primary_key=True,
+#     ),
+# )
 
-plants_users_association = Table(
-    "plants_users_association",
-    Base.metadata,
-    Column(
-        "plant_id",
-        UUID(as_uuid=True),
-        ForeignKey("plants.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    Column(
-        "user_id",
-        String,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
+# plants_users_association = Table(
+#     "plants_users_association",
+#     Base.metadata,
+#     Column(
+#         "plant_id",
+#         UUID(as_uuid=True),
+#         ForeignKey("plants.id", ondelete="CASCADE"),
+#         primary_key=True,
+#     ),
+#     Column(
+#         "user_id",
+#         String,
+#         ForeignKey("users.id", ondelete="CASCADE"),
+#         primary_key=True,
+#     ),
+#     Column(
+#         "role",
+#         UUID(as_uuid=True),
+#         ForeignKey("roles.id", ondelete="CASCADE"),
+#     )
+# )

@@ -1,14 +1,10 @@
-import uuid
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, Enum, DateTime, func
+from __future__ import annotations
+
+from sqlalchemy import UUID, ForeignKey, String, Enum, DateTime, func
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from app.services.database_service import Base
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING
-from .associations import users_roles_association, plants_users_association
-
-if TYPE_CHECKING:
-    from .plants import Plants
+from uuid import UUID as UUIDType
 
 
 class UserRoleEnum(str, PyEnum):
@@ -23,49 +19,22 @@ class UserStatus(str, PyEnum):
     ARCHIVED = "ARCHIVED"
 
 
-class Roles(Base):
-    __tablename__ = "roles"
-
-    def __init__(self, name: UserRoleEnum) -> None:
-        self.name = name
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        nullable=False,
-        unique=True,
-        primary_key=True,
-        default=lambda: uuid.uuid4(),
-    )
-    name: Mapped[UserRoleEnum] = mapped_column(
-        Enum(UserRoleEnum, native_enum=False), unique=True, nullable=False
-    )
-
-    # Backref to users with this role
-    users: Mapped[list["Users"]] = relationship(
-        "Users", secondary=users_roles_association, back_populates="roles"
-    )
-
-    model_config = {"from_attributes": True}
-
-
 class Users(Base):
     __tablename__ = "users"
+
     # id must be string because of the sub created by cognito
-    id = mapped_column(String, nullable=False, unique=True, primary_key=True)
-    user_name = mapped_column(String, nullable=False)
-    email = mapped_column(String, nullable=False, unique=True)
-    roles: Mapped[list[Roles]] = relationship(
-        "Roles",
-        secondary=users_roles_association,
-        back_populates="users",
-        lazy="joined",
+    id: Mapped[str] = mapped_column(
+        String, nullable=False, unique=True, primary_key=True
     )
+    user_name: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    global_role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), nullable=True)
 
     # Associations
-    plants: Mapped[list["Plants"]] = relationship(
-        "Plants",
-        secondary=plants_users_association,
-        back_populates="users",
+    plant_associations: Mapped[list["UserPlantAssociation"]] = relationship(
+        "UserPlantAssociation",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     # Metadata
@@ -86,3 +55,31 @@ class Users(Base):
     )
 
     model_config = {"from_attributes": True}
+
+    # A property to access the plant directly
+    @property
+    def plants(self) -> list["Plants"]:
+        return [association.plant for association in self.plant_associations]
+
+
+class UserPlantAssociation(Base):
+    __tablename__ = "user_plant_association"
+
+    def __init__(self, user: "Users", plant: "Plants", role: "UserRoleEnum"):
+        self.user = user
+        self.plant = plant
+        self.role = role
+
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("users.id"), primary_key=True
+    )
+    plant_id: Mapped[UUIDType] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("plants.id"), primary_key=True
+    )
+    role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum), nullable=False)
+
+    user: Mapped["Users"] = relationship("Users", back_populates="plant_associations")
+    plant: Mapped["Plants"] = relationship("Plants", back_populates="user_associations")
+
+
+from app.models.plants import Plants

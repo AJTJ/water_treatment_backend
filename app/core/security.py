@@ -24,6 +24,7 @@ def get_current_user(
     return user
 
 
+# This needs to be updated to check the user's roles in the UserPlantAssociation table
 def has_role(roles: List[UserRoleEnum]) -> Callable[[Users], Users]:
     def role_checker(user: Users = Depends(get_current_user)) -> Users:
 

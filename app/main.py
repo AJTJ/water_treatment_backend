@@ -14,10 +14,9 @@ app: FastAPI = FastAPI(title="Water Treatment API", version="1.0")
 # Middleware for handling CORS
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=[
-    #     "http://localhost:3000"
-    # ],  # Change this to specific domains in production
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000"
+    ],  # Change this to specific domains in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

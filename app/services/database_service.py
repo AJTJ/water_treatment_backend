@@ -2,9 +2,9 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
-    declarative_base,
+    # declarative_base,
     Session as SQLAlchemySession,
-    # DeclarativeBase,
+    DeclarativeBase,
     # MappedAsDataclass,
 )
 from dotenv import load_dotenv
@@ -24,8 +24,13 @@ engine = create_engine(DATABASE_URL, echo=True)
 # Create a configured "Session" class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 # Base class for models
-Base = declarative_base()
+# Base = declarative_base()
+# NOTE: Apparently using the declarative_base() function is not working as well
+class Base(DeclarativeBase):
+    pass
+
 
 # TODO: Make all models dataclasses
 # class Base(DeclarativeBase, MappedAsDataclass)
