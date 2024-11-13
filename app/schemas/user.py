@@ -5,6 +5,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
+from app.schemas.plant import PlantBase
+
 
 class Role(BaseModel):
     id: uuid.UUID
@@ -15,6 +17,7 @@ class UserBase(BaseModel):
     id: str
     user_name: str
     email: str
+    global_role: Optional[UserRoleEnum]
 
     # Metadata
     status: UserStatus
@@ -24,11 +27,16 @@ class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PlantsAndRolesResponse(BaseModel):
+    plant: PlantBase
+    role: UserRoleEnum
+
+
 class UserBaseWithRelations(UserBase):
-    plant_associations: Optional[list[UserPlantAssociation]]
+    plants_and_roles: Optional[list[PlantsAndRolesResponse]]
 
 
-class PlantsAndRoles(BaseModel):
+class PlantsAndRolesCreation(BaseModel):
     plant_id: uuid.UUID
     role: UserRoleEnum
 
@@ -38,7 +46,7 @@ class UserCreateRequest(BaseModel):
     user_name: str
     email: str
     global_role: UserRoleEnum
-    plants_and_roles: list[PlantsAndRoles]
+    plants_and_roles: list[PlantsAndRolesCreation]
 
 
 class UserCreateResponse(BaseModel):
@@ -51,7 +59,7 @@ class UserCreateResponse(BaseModel):
 class UserUpdate(BaseModel):
     user_name: str
     email: str
-    roles: list[UserRoleEnum]
+    global_role: UserRoleEnum
 
 
-from app.models.users import UserPlantAssociation, UserRoleEnum, UserStatus
+from app.models.users import UserRoleEnum, UserStatus

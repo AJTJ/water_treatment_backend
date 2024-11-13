@@ -56,7 +56,7 @@ class Users(Base):
 
     model_config = {"from_attributes": True}
 
-    # A property to access the plant directly
+    # A property to access the plants directly
     @property
     def plants(self) -> list["Plants"]:
         return [association.plant for association in self.plant_associations]

@@ -18,9 +18,9 @@ class PlantBase(BaseModel):
 
 
 class PlantWithRelations(PlantBase):
-    items: list["ItemBase"] = []
-    user_associations: list["UserPlantAssociation"] = []
-    qr_codes: list["QRCodeBase"] = []
+    items: list["ItemBase"]
+    user_associations: list["UserPlantAssociation"]
+    qr_codes: list["QRCodeBase"]
 
 
 class PlantCreate(BaseModel):
@@ -34,12 +34,12 @@ class PlantUpdate(BaseModel):
     name: Optional[str]
     image_url: Optional[str]
     location: Optional[str]
-    users_to_add: list[UserRoleAssignment] = []
-    users_to_remove: list[str] = []
-    items_to_add: list[uuid.UUID] = []
-    items_to_remove: list[uuid.UUID] = []
-    qr_codes_to_add: list[uuid.UUID] = []
-    qr_codes_to_remove: list[uuid.UUID] = []
+    users_to_add: list[UserRoleAssignment]
+    users_to_remove: list[str]
+    items_to_add: list[uuid.UUID]
+    items_to_remove: list[uuid.UUID]
+    qr_codes_to_add: list[uuid.UUID]
+    qr_codes_to_remove: list[uuid.UUID]
 
 
 class UserInPlant(BaseModel):

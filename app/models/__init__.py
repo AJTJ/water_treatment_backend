@@ -1,4 +1,3 @@
-# app/models/__init__.py
 from app.models.items import (
     Items,
     ItemStatusEnum,
@@ -6,42 +5,47 @@ from app.models.items import (
 from app.models.item_requests import ItemRequests, ItemRequestStatusEnum
 from app.models.qr_codes import QRCodes, QRCodeStatus
 from app.models.failed_syncs import FailedSyncs
-from app.models.users import Users, UserStatus, UserRoleEnum
+from app.models.users import Users, UserStatus, UserRoleEnum, UserPlantAssociation
 from app.models.suppliers import Suppliers
 from app.models.associations import (
     items_suppliers_association,
     items_item_types_association,
     items_parts_association,
+    item_request_parts_association,
+    PartRequestUrgencyLevels,
 )
 from app.models.item_types import ItemTypes, ItemTypeEnum
-from app.models.plants import Plants
+from app.models.plants import Plants, PlantStatus
 
 __all__ = [
     # Associations
     "items_suppliers_association",
-    "items_item_types_association",
     "items_parts_association",
-    "users_roles_association",
+    "items_item_types_association",
+    "PartRequestUrgencyLevels",
+    "item_request_parts_association",
     # FailedSync
     "FailedSyncs",
     # Item Request
-    "ItemRequests",
     "ItemRequestStatusEnum",
+    "ItemRequests",
     # ItemType
-    "ItemTypes",
     "ItemTypeEnum",
+    "ItemTypes",
     # Item
-    "Items",
     "ItemStatusEnum",
+    "Items",
+    # Plant
+    "PlantStatus",
+    "Plants",
     # QRCode
-    "QRCodes",
     "QRCodeStatus",
+    "QRCodes",
     # Supplier
     "Suppliers",
     # User
-    "Users",
     "UserRoleEnum",
     "UserStatus",
-    # Plant
-    "Plants",
+    "Users",
+    "UserPlantAssociation",
 ]

@@ -8,9 +8,13 @@ from mypy_boto3_cognito_idp.type_defs import (
     AdminCreateUserResponseTypeDef,
     GetUserResponseTypeDef,
 )
-from typing import Optional
+from typing import Optional, Union
 
-from app.schemas.auth import CognitoLoginResponse, RefreshResponse
+from app.schemas.auth import (
+    CognitoLoginResponse,
+    CognitoChallengeResponse,
+    RefreshResponse,
+)
 from app.schemas.user import (
     UserCreateResponse,
 )
@@ -32,19 +36,36 @@ if USER_POOL_ID is None or CLIENT_ID is None:
 
 
 def login_cognito_user(
-    username: str, password: str, response: Response
-) -> CognitoLoginResponse:
+    email: str, password: str, response: Response
+) -> Union[CognitoLoginResponse, CognitoChallengeResponse]:
     try:
-
         if CLIENT_ID is None:
             raise ValueError("Cognito Client ID not set in environment variables.")
+
+        print(f"LOGIN COGNITO Email: {email}, Password: {password}")
 
         # Call Cognito to initiate auth
         result: InitiateAuthResponseTypeDef = cognito_client.initiate_auth(
             ClientId=CLIENT_ID,
             AuthFlow="USER_PASSWORD_AUTH",
-            AuthParameters={"USERNAME": username, "PASSWORD": password},
+            AuthParameters={"USERNAME": email, "PASSWORD": password},
         )
+
+        # Handle NEW_PASSWORD_REQUIRED challenge
+        if result.get("ChallengeName") == "NEW_PASSWORD_REQUIRED":
+            session: str | None = result.get("Session")
+            if not session:
+                raise Exception(
+                    "Session token is missing in the response for new password challenge."
+                )
+
+            return CognitoChallengeResponse(
+                challenge="NEW_PASSWORD_REQUIRED",
+                session=session,
+                message="New password required",
+            )
+
+        print(f"LOGIN COGNITO Result: {result}")
 
         # Extract response details
         auth_result = result.get("AuthenticationResult")
@@ -120,6 +141,77 @@ def login_cognito_user(
             operation_name="Login",
             error_response={"Error": {"Message": "Invalid credentials"}},
         ) from e
+    except ClientError as e:
+        raise Exception(f"ClientError in login: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error in login: {str(e)}")
+
+
+def respond_to_new_password_challenge(
+    email: str, new_password: str, session: str, http_response: Response
+) -> CognitoLoginResponse:
+    # TODO: Fix error handling
+    try:
+        if CLIENT_ID is None:
+            raise ValueError("Cognito Client ID not set in environment variables.")
+        cognito_response = cognito_client.respond_to_auth_challenge(
+            ChallengeName="NEW_PASSWORD_REQUIRED",
+            ClientId=CLIENT_ID,
+            Session=session,
+            ChallengeResponses={"USERNAME": email, "NEW_PASSWORD": new_password},
+        )
+
+        auth_result = cognito_response.get("AuthenticationResult")
+        if not auth_result:
+            raise HTTPException(status_code=500, detail="Failed to authenticate user")
+
+        access_token = auth_result.get("AccessToken")
+        id_token = auth_result.get("IdToken")
+        refresh_token = auth_result.get("RefreshToken")
+        expires_in = auth_result.get("ExpiresIn")
+
+        if not all([access_token, id_token, refresh_token, expires_in]):
+            raise HTTPException(
+                status_code=500,
+                detail="Incomplete authentication response from Cognito",
+            )
+
+        assert access_token is not None
+        assert id_token is not None
+        assert refresh_token is not None
+        assert expires_in is not None
+
+        user_info = cognito_client.get_user(AccessToken=access_token)
+        sub: Optional[str] = None
+        attributes = user_info.get("UserAttributes")
+        if attributes:
+            for attribute in attributes:
+                if attribute["Name"] == "sub":
+                    sub = attribute.get("Value")
+
+        if sub is None:
+            raise HTTPException(
+                status_code=500, detail="User ID (sub) not found in Cognito response"
+            )
+
+        http_response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=expires_in,
+        )
+        http_response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=30 * 24 * 60 * 60,  # typically refresh token is valid for 30 days
+        )
+
+        return CognitoLoginResponse(sub=sub)
     except ClientError as e:
         raise Exception(f"ClientError in login: {str(e)}")
     except Exception as e:

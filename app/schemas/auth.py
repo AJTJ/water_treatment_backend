@@ -22,6 +22,18 @@ class CognitoLoginResponse(BaseModel):
     sub: str
 
 
+class CognitoChallengeResponse(BaseModel):
+    challenge: str
+    session: str
+    message: str
+
+
+class ChallengeResponseRequest(BaseModel):
+    email: str
+    new_password: str
+    session: str
+
+
 # LOGIN/LOGOUT
 class LoginRequest(BaseModel):
     email: str

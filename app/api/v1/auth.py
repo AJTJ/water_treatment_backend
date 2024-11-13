@@ -1,9 +1,18 @@
+from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 # from app.core.security import has_role
 from app.models.plants import Plants
-from app.schemas.auth import LoginRequest, LogoutResponse, RefreshResponse
+from app.schemas.auth import (
+    ChallengeResponseRequest,
+    CognitoChallengeResponse,
+    LoginRequest,
+    LogoutResponse,
+    RefreshResponse,
+)
+from app.schemas.plant import PlantBase
 from app.schemas.user import (
+    PlantsAndRolesResponse,
     UserBase,
     UserBaseWithRelations,
     UserCreateRequest,
@@ -15,6 +24,7 @@ from app.services.auth_service import (
     delete_cognito_user,
     login_cognito_user,
     refresh_user_token,
+    respond_to_new_password_challenge,
     session_revoke_token,
 )
 from app.services.database_service import get_session
@@ -24,22 +34,57 @@ from sqlalchemy.orm import Session
 router = APIRouter()
 
 
-@router.post("/login", response_model=UserBase)
+@router.post("/login", response_model=Union[UserBase, CognitoChallengeResponse])
 def login(
     request: LoginRequest,
     response: Response,
     db: Session = Depends(get_session),
+) -> Union[UserBase, CognitoChallengeResponse]:
+    print("pre try")
+    try:
+
+        # Check if the user exists in the Cognito database
+        cognito_response = login_cognito_user(request.email, request.password, response)
+
+        if isinstance(cognito_response, CognitoChallengeResponse):
+            return cognito_response
+
+        print(f"Cognito Response: {cognito_response}")
+
+        # Check if the user exists in the database using the Cognito sub
+        user = db.query(Users).filter(Users.id == cognito_response.sub).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        db.refresh(user)
+        return UserBase.model_validate(user)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@router.post("/respond-to-challenge", response_model=UserBase)
+def respond_to_challenge(
+    request: ChallengeResponseRequest,
+    response: Response,
+    db: Session = Depends(get_session),
 ) -> UserBase:
-    # Check if the user exists in the complementary database
-    cognito_response = login_cognito_user(request.email, request.password, response)
+    try:
+        # Respond to the NEW_PASSWORD_REQUIRED challenge with the new password
+        cognito_response = respond_to_new_password_challenge(
+            request.email, request.new_password, request.session, response
+        )
 
-    # Check if the user exists in the complementary database using the Cognito sub
-    user = db.query(Users).filter(Users.id == cognito_response.sub).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # Retrieve user from the database
+        user = db.query(Users).filter(Users.id == cognito_response.sub).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    db.refresh(user)
-    return UserBase.model_validate(user)
+        db.refresh(user)
+        return UserBase.model_validate(user)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.post("/refresh-token", response_model=RefreshResponse)
@@ -58,14 +103,23 @@ def get_user(email: str, db: Session = Depends(get_session)) -> UserBaseWithRela
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        plants_and_roles = [
+            PlantsAndRolesResponse(
+                plant=PlantBase.model_validate(association.plant),
+                role=association.role,
+            )
+            for association in user.plant_associations
+        ]
+
         user_data: UserBaseWithRelations = UserBaseWithRelations(
             id=user.id,
             user_name=user.user_name,
             email=user.email,
+            global_role=user.global_role,
             status=user.status,
             created_at=user.created_at,
             updated_at=user.updated_at,
-            plant_associations=user.plant_associations,
+            plants_and_roles=plants_and_roles,
         )
 
         return user_data

@@ -78,6 +78,12 @@ class Plants(Base):
 
     model_config = {"from_attributes": True}
 
+    # A property to access the users directly
+    @property
+    def users(self) -> list["Users"]:
+        return [association.user for association in self.user_associations]
+
 
 from app.models.items import Items
 from app.models.qr_codes import QRCodes
+from app.models.users import Users

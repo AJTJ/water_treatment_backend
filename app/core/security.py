@@ -25,14 +25,14 @@ def get_current_user(
 
 
 # This needs to be updated to check the user's roles in the UserPlantAssociation table
-def has_role(roles: List[UserRoleEnum]) -> Callable[[Users], Users]:
-    def role_checker(user: Users = Depends(get_current_user)) -> Users:
+# def has_role(roles: List[UserRoleEnum]) -> Callable[[Users], Users]:
+#     def role_checker(user: Users = Depends(get_current_user)) -> Users:
 
-        user_roles = {role.name for role in user.roles}
-        if not any(role in user_roles for role in roles):
-            raise HTTPException(
-                status_code=403, detail="Access forbidden: insufficient permissions"
-            )
-        return user
+#         user_roles = {role.name for role in user.roles}
+#         if not any(role in user_roles for role in roles):
+#             raise HTTPException(
+#                 status_code=403, detail="Access forbidden: insufficient permissions"
+#             )
+#         return user
 
-    return role_checker
+#     return role_checker
