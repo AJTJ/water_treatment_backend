@@ -1,5 +1,6 @@
 from typing import Union
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
+from fastapi.security import OAuth2PasswordBearer
 
 # from app.core.security import has_role
 from app.models.plants import Plants
@@ -22,10 +23,14 @@ from app.models.users import UserPlantAssociation, Users
 from app.services.auth_service import (
     create_cognito_user,
     delete_cognito_user,
+    disable_cognito_user,
+    enable_cognito_user,
     login_cognito_user,
     refresh_user_token,
     respond_to_new_password_challenge,
+    revoke_cognito_sessions,
     session_revoke_token,
+    validate_cognito_token,
 )
 from app.services.database_service import get_session
 from sqlalchemy.orm import Session
@@ -42,14 +47,15 @@ def login(
 ) -> Union[UserBase, CognitoChallengeResponse]:
     print("pre try")
     try:
+        print("in try")
 
         # Check if the user exists in the Cognito database
         cognito_response = login_cognito_user(request.email, request.password, response)
 
+        print(f"Cognito Response: {cognito_response}")
+
         if isinstance(cognito_response, CognitoChallengeResponse):
             return cognito_response
-
-        print(f"Cognito Response: {cognito_response}")
 
         # Check if the user exists in the database using the Cognito sub
         user = db.query(Users).filter(Users.id == cognito_response.sub).first()
@@ -60,7 +66,7 @@ def login(
         return UserBase.model_validate(user)
     except Exception as e:
         print(f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 
 @router.post("/respond-to-challenge", response_model=UserBase)
@@ -71,6 +77,8 @@ def respond_to_challenge(
 ) -> UserBase:
     try:
         # Respond to the NEW_PASSWORD_REQUIRED challenge with the new password
+
+        print(f"Trying challenge request: {request}")
         cognito_response = respond_to_new_password_challenge(
             request.email, request.new_password, request.session, response
         )
@@ -82,15 +90,44 @@ def respond_to_challenge(
 
         db.refresh(user)
         return UserBase.model_validate(user)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception occurred: {http_exc}")
+        raise http_exc
     except Exception as e:
         print(f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+@router.get("/me")
+async def read_me(
+    request: Request,
+    db: Session = Depends(get_session),
+) -> UserBase:
+    print("In read_me")
+    try:
+        token = request.cookies.get("access_token")
+        print("Access token from cookies:", token)
+        if not token:
+            raise HTTPException(status_code=401, detail="Access token missing")
+
+        user_sub = validate_cognito_token(token)
+        user = db.query(Users).filter(Users.id == user_sub).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        db.refresh(user)
+        return UserBase.model_validate(user)
+    except HTTPException as e:
+        raise e
 
 
 @router.post("/refresh-token", response_model=RefreshResponse)
 def refresh_token(
-    refresh_token: str,
-    response: Response,
+    refresh_token: str = Cookie(None),
+    response: Response = Response(),
 ) -> RefreshResponse:
     return refresh_user_token(refresh_token, response)
 
@@ -231,3 +268,67 @@ async def update_user(
         print(f"Error occurred: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@router.post("/archive-user/{user_email}", status_code=204)
+async def archive_user(user_email: str, db: Session = Depends(get_session)) -> Response:
+    user = db.query(Users).filter(Users.email == user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        # Disable the user's account in Cognito
+        disable_cognito_user(user.email)
+
+        # Revoke all active sessions for the user
+        revoke_cognito_sessions(user.email)
+
+        # Mark the user as archived in the database
+        user.status = "archived"
+        db.commit()
+
+        return Response(status_code=204)
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception occurred: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        print(f"Error occurred while archiving user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to archive user.")
+
+
+@router.post("/reactivate-user/{user_email}")
+async def reactivate_user(user_email: str, db: Session = Depends(get_session)) -> None:
+    # Fetch the user from the database
+    print("MEMES Fetching user from database")
+    user = db.query(Users).filter(Users.email == user_email).first()
+
+    print(f"DANK MEMES User fetched: {user}")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.status != "archived":
+        raise HTTPException(status_code=400, detail="User is not archived")
+
+    try:
+        # Reactivate in Cognito
+        print(f"Attempting to enable Cognito user with email: {user.email}")
+        enable_cognito_user(user.email)
+
+        print("User reactivated in Cognito")
+        # Reactivate in database
+        user.status = "active"
+        db.commit()
+        print("User reactivated in database")
+
+    except HTTPException as http_exc:
+        print(f"HTTP Exception occurred: {http_exc}")
+        raise http_exc
+
+    except Exception as e:
+        db.rollback()
+        import traceback
+
+        traceback.print_exc()
+        print(f"Error occurred while reactivating user: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reactivate user: {e}")

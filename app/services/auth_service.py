@@ -93,16 +93,23 @@ def login_cognito_user(
             AccessToken=access_token
         )
 
+        print(f"User Info: {user_info}")
+
         email_verified = False
         sub: Optional[str] = None
         attributes = user_info.get("UserAttributes")
+
+        print(f"User Attributes: {attributes}")
+
         if attributes:
             for attribute in attributes:
+                print(f"Attribute: {attribute}")
                 if attribute["Name"] == "email_verified":
                     email_verified = attribute.get("Value") == "true"
-                    break
                 if attribute["Name"] == "sub":
                     sub = attribute.get("Value")
+
+        print(f"Extracted sub: {sub}")
 
         # Raise an exception if the email is not verified
         if not email_verified:
@@ -213,9 +220,13 @@ def respond_to_new_password_challenge(
 
         return CognitoLoginResponse(sub=sub)
     except ClientError as e:
-        raise Exception(f"ClientError in login: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
-        raise Exception(f"Error in login: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error in challenge request: {str(e)}"
+        )
 
 
 # Refresh token function that returns typed Pydantic model
@@ -284,7 +295,6 @@ def refresh_user_token(refresh_token: str, response: Response) -> RefreshRespons
         raise Exception(f"Error refreshing token: {str(e)}")
 
 
-# NOTE: Currently using only email based login only
 def create_cognito_user(email: str) -> UserCreateResponse:
     try:
         if USER_POOL_ID is None or CLIENT_ID is None:
@@ -297,6 +307,7 @@ def create_cognito_user(email: str) -> UserCreateResponse:
             Username=email,
             UserAttributes=[
                 {"Name": "email", "Value": email},
+                {"Name": "email_verified", "Value": "true"},
             ],
         )
 
@@ -344,7 +355,19 @@ def validate_cognito_token(access_token: str) -> str:
         )
 
 
-def global_revoke_token(token: str) -> None:
+def revoke_cognito_sessions(email: str) -> None:
+    try:
+        if USER_POOL_ID is None:
+            raise ValueError("Cognito User Pool ID not set in environment variables.")
+        cognito_client.admin_user_global_sign_out(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+        )
+    except ClientError as e:
+        raise Exception(f"Error revoking user sessions: {str(e)}")
+
+
+def global_revoke_token_with_token(token: str) -> None:
     """Revoke the refresh token."""
     try:
         cognito_client.global_sign_out(AccessToken=token)
@@ -368,8 +391,19 @@ def session_revoke_token(token: str) -> None:
         ) from e
 
 
+def disable_cognito_user(email: str) -> None:
+    try:
+        if USER_POOL_ID is None:
+            raise ValueError("Cognito User Pool ID not set in environment variables.")
+        cognito_client.admin_disable_user(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 def delete_cognito_user(username: str) -> None:
-    """Delete a user from Cognito."""
     try:
         if USER_POOL_ID is None:
             raise ValueError("Cognito User Pool ID not set in environment variables.")
@@ -379,4 +413,16 @@ def delete_cognito_user(username: str) -> None:
             Username=username,
         )
     except ClientError as e:
-        raise Exception(f"Error deleting user: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def enable_cognito_user(email: str) -> None:
+    try:
+        if USER_POOL_ID is None:
+            raise ValueError("Cognito User Pool ID not set in environment variables.")
+        cognito_client.admin_enable_user(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=400, detail=str(e))
