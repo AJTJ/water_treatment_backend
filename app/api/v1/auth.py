@@ -44,11 +44,8 @@ def login(
     request: LoginRequest,
     response: Response,
     db: Session = Depends(get_session),
-) -> Union[UserBase, CognitoChallengeResponse]:
-    print("pre try")
+) -> Union[UserBaseWithRelations, CognitoChallengeResponse]:
     try:
-        print("in try")
-
         # Check if the user exists in the Cognito database
         cognito_response = login_cognito_user(request.email, request.password, response)
 
@@ -62,19 +59,35 @@ def login(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        db.refresh(user)
-        return UserBase.model_validate(user)
+        # returned_user = UserBaseWithRelations(
+        #     id=user.id,
+        #     user_name=user.user_name,
+        #     email=user.email,
+        #     global_role=user.global_role,
+        #     status=user.status,
+        #     created_at=user.created_at,
+        #     updated_at=user.updated_at,
+        #     plants_and_roles=[
+        #         PlantsAndRolesResponse(
+        #             plant=PlantBase.model_validate(association.plant),
+        #             role=association.role,
+        #         )
+        #         for association in user.plant_associations
+        #     ],
+        # )
+        return UserBaseWithRelations.model_validate(user)
+        # return returned_user
     except Exception as e:
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 
-@router.post("/respond-to-challenge", response_model=UserBase)
+@router.post("/respond-to-challenge", response_model=UserBaseWithRelations)
 def respond_to_challenge(
     request: ChallengeResponseRequest,
     response: Response,
     db: Session = Depends(get_session),
-) -> UserBase:
+) -> UserBaseWithRelations:
     try:
         # Respond to the NEW_PASSWORD_REQUIRED challenge with the new password
 
@@ -89,7 +102,25 @@ def respond_to_challenge(
             raise HTTPException(status_code=404, detail="User not found")
 
         db.refresh(user)
-        return UserBase.model_validate(user)
+
+        returned_user = UserBaseWithRelations(
+            id=user.id,
+            user_name=user.user_name,
+            email=user.email,
+            global_role=user.global_role,
+            status=user.status,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            plants_and_roles=[
+                PlantsAndRolesResponse(
+                    plant=PlantBase.model_validate(association.plant),
+                    role=association.role,
+                )
+                for association in user.plant_associations
+            ],
+        )
+
+        return returned_user
 
     except HTTPException as http_exc:
         print(f"HTTP Exception occurred: {http_exc}")
@@ -106,7 +137,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def read_me(
     request: Request,
     db: Session = Depends(get_session),
-) -> UserBase:
+) -> UserBaseWithRelations:
     print("In read_me")
     try:
         token = request.cookies.get("access_token")
@@ -119,7 +150,25 @@ async def read_me(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         db.refresh(user)
-        return UserBase.model_validate(user)
+
+        returned_user = UserBaseWithRelations(
+            id=user.id,
+            user_name=user.user_name,
+            email=user.email,
+            global_role=user.global_role,
+            status=user.status,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            plants_and_roles=[
+                PlantsAndRolesResponse(
+                    plant=PlantBase.model_validate(association.plant),
+                    role=association.role,
+                )
+                for association in user.plant_associations
+            ],
+        )
+
+        return returned_user
     except HTTPException as e:
         raise e
 
@@ -170,7 +219,7 @@ def get_user(email: str, db: Session = Depends(get_session)) -> UserBaseWithRela
 async def create_user(
     user_create_request: UserCreateRequest,
     db: Session = Depends(get_session),
-) -> UserBase:
+) -> UserBaseWithRelations:
     created_cognito_user = None
     # TODO: User is still being sent confirmation email even if the cognito user is deleted due to an error
     try:
@@ -212,7 +261,25 @@ async def create_user(
         if not new_user:
             delete_cognito_user(created_cognito_user.sub)
             raise HTTPException(status_code=404, detail="New User not found")
-        return UserBase.model_validate(new_user)
+
+        returned_user = UserBaseWithRelations(
+            id=new_user.id,
+            user_name=new_user.user_name,
+            email=new_user.email,
+            global_role=new_user.global_role,
+            status=new_user.status,
+            created_at=new_user.created_at,
+            updated_at=new_user.updated_at,
+            plants_and_roles=[
+                PlantsAndRolesResponse(
+                    plant=PlantBase.model_validate(association.plant),
+                    role=association.role,
+                )
+                for association in new_user.plant_associations
+            ],
+        )
+
+        return returned_user
 
     except HTTPException:
         if created_cognito_user:
@@ -298,7 +365,9 @@ async def archive_user(user_email: str, db: Session = Depends(get_session)) -> R
 
 
 @router.post("/reactivate-user/{user_email}")
-async def reactivate_user(user_email: str, db: Session = Depends(get_session)) -> None:
+async def reactivate_user(
+    user_email: str, db: Session = Depends(get_session)
+) -> UserBaseWithRelations:
     # Fetch the user from the database
     print("MEMES Fetching user from database")
     user = db.query(Users).filter(Users.email == user_email).first()
@@ -320,6 +389,9 @@ async def reactivate_user(user_email: str, db: Session = Depends(get_session)) -
         user.status = "active"
         db.commit()
         print("User reactivated in database")
+
+        db.refresh(user)
+        return UserBaseWithRelations.model_validate(user)
 
     except HTTPException as http_exc:
         print(f"HTTP Exception occurred: {http_exc}")

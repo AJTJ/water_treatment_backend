@@ -8,11 +8,6 @@ from typing import Optional
 from app.schemas.plant import PlantBase
 
 
-class Role(BaseModel):
-    id: uuid.UUID
-    name: UserRoleEnum
-
-
 class UserBase(BaseModel):
     id: str
     user_name: str
