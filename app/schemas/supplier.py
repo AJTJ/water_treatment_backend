@@ -9,7 +9,7 @@ class SupplierBase(BaseModel):
     name: str
 
 
-class SupplierWithRelations(SupplierBase):
+class SupplierBaseWithRelations(SupplierBase):
     items: Optional[list["ItemBase"]]
 
 

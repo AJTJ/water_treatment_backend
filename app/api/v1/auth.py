@@ -1,8 +1,7 @@
 from typing import Union
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordBearer
-
-# from app.core.security import has_role
+from app.core.security import get_current_user
 from app.models.plants import Plants
 from app.schemas.auth import (
     ChallengeResponseRequest,
@@ -11,15 +10,14 @@ from app.schemas.auth import (
     LogoutResponse,
     RefreshResponse,
 )
-from app.schemas.plant import PlantBase
+
 from app.schemas.user import (
-    PlantsAndRolesResponse,
     UserBase,
     UserBaseWithRelations,
     UserCreateRequest,
     UserUpdate,
 )
-from app.models.users import UserPlantAssociation, Users
+from app.models.users import UserPlantAssociation, UserRoleEnum, Users
 from app.services.auth_service import (
     create_cognito_user,
     delete_cognito_user,
@@ -49,8 +47,6 @@ def login(
         # Check if the user exists in the Cognito database
         cognito_response = login_cognito_user(request.email, request.password, response)
 
-        print(f"Cognito Response: {cognito_response}")
-
         if isinstance(cognito_response, CognitoChallengeResponse):
             return cognito_response
 
@@ -59,22 +55,6 @@ def login(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # returned_user = UserBaseWithRelations(
-        #     id=user.id,
-        #     user_name=user.user_name,
-        #     email=user.email,
-        #     global_role=user.global_role,
-        #     status=user.status,
-        #     created_at=user.created_at,
-        #     updated_at=user.updated_at,
-        #     plants_and_roles=[
-        #         PlantsAndRolesResponse(
-        #             plant=PlantBase.model_validate(association.plant),
-        #             role=association.role,
-        #         )
-        #         for association in user.plant_associations
-        #     ],
-        # )
         return UserBaseWithRelations.model_validate(user)
         # return returned_user
     except Exception as e:
@@ -103,24 +83,7 @@ def respond_to_challenge(
 
         db.refresh(user)
 
-        returned_user = UserBaseWithRelations(
-            id=user.id,
-            user_name=user.user_name,
-            email=user.email,
-            global_role=user.global_role,
-            status=user.status,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            plants_and_roles=[
-                PlantsAndRolesResponse(
-                    plant=PlantBase.model_validate(association.plant),
-                    role=association.role,
-                )
-                for association in user.plant_associations
-            ],
-        )
-
-        return returned_user
+        return UserBaseWithRelations.model_validate(user)
 
     except HTTPException as http_exc:
         print(f"HTTP Exception occurred: {http_exc}")
@@ -151,24 +114,7 @@ async def read_me(
             raise HTTPException(status_code=404, detail="User not found")
         db.refresh(user)
 
-        returned_user = UserBaseWithRelations(
-            id=user.id,
-            user_name=user.user_name,
-            email=user.email,
-            global_role=user.global_role,
-            status=user.status,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            plants_and_roles=[
-                PlantsAndRolesResponse(
-                    plant=PlantBase.model_validate(association.plant),
-                    role=association.role,
-                )
-                for association in user.plant_associations
-            ],
-        )
-
-        return returned_user
+        return UserBaseWithRelations.model_validate(user)
     except HTTPException as e:
         raise e
 
@@ -181,37 +127,20 @@ def refresh_token(
     return refresh_user_token(refresh_token, response)
 
 
-# TEST ENDPOINT
-@router.get("/user/{email}", response_model=UserBaseWithRelations)
-def get_user(email: str, db: Session = Depends(get_session)) -> UserBaseWithRelations:
-    try:
-        user = db.query(Users).filter(Users.email == email).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+@router.post("/logout")
+async def logout(request: Request, response: Response) -> LogoutResponse:
+    refresh_token = request.cookies.get("refresh_token")
 
-        plants_and_roles = [
-            PlantsAndRolesResponse(
-                plant=PlantBase.model_validate(association.plant),
-                role=association.role,
-            )
-            for association in user.plant_associations
-        ]
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="No refresh token provided")
 
-        user_data: UserBaseWithRelations = UserBaseWithRelations(
-            id=user.id,
-            user_name=user.user_name,
-            email=user.email,
-            global_role=user.global_role,
-            status=user.status,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            plants_and_roles=plants_and_roles,
-        )
+    session_revoke_token(refresh_token)
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
+    return LogoutResponse(message="Logged out successfully")
 
-        return user_data
-    except Exception as e:
-        print(f"Error occurred getting user: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+# USER THINGS #
 
 
 # dependencies=[Depends(has_role([UserRoleEnum.ADMIN]))]
@@ -262,24 +191,7 @@ async def create_user(
             delete_cognito_user(created_cognito_user.sub)
             raise HTTPException(status_code=404, detail="New User not found")
 
-        returned_user = UserBaseWithRelations(
-            id=new_user.id,
-            user_name=new_user.user_name,
-            email=new_user.email,
-            global_role=new_user.global_role,
-            status=new_user.status,
-            created_at=new_user.created_at,
-            updated_at=new_user.updated_at,
-            plants_and_roles=[
-                PlantsAndRolesResponse(
-                    plant=PlantBase.model_validate(association.plant),
-                    role=association.role,
-                )
-                for association in new_user.plant_associations
-            ],
-        )
-
-        return returned_user
+        return UserBaseWithRelations.model_validate(new_user)
 
     except HTTPException:
         if created_cognito_user:
@@ -294,41 +206,105 @@ async def create_user(
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@router.post("/logout")
-async def logout(request: Request, response: Response) -> LogoutResponse:
-    refresh_token = request.cookies.get("refresh_token")
-
-    if not refresh_token:
-        raise HTTPException(status_code=400, detail="No refresh token provided")
-
-    session_revoke_token(refresh_token)
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
-    return LogoutResponse(message="Logged out successfully")
+# dependencies=[Depends(has_role([UserRoleEnum.ADMIN]))]
+@router.get("/users", response_model=list[UserBaseWithRelations])
+async def get_users(db: Session = Depends(get_session)) -> list[UserBaseWithRelations]:
+    try:
+        users = db.query(Users).all()
+        return [UserBaseWithRelations.model_validate(user) for user in users]
+    except Exception as e:
+        print(f"Error occurred getting users: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@router.post("/update/{user_id}")
+@router.post("/update/{user_id}", response_model=UserBase)
 async def update_user(
     user_id: str,
     user_update_request: UserUpdate,
     db: Session = Depends(get_session),
+    current_user: Users = Depends(get_current_user),
 ) -> UserBase:
     try:
+        # Fetch the target user
         user = db.query(Users).filter(Users.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        user_data = user_update_request.model_dump(exclude={"roles"})
-        user_data["id"] = user_id
-        user = Users(**user_data)
-        user.plant_associations = []
+        # Authorization: Allow only self-updates or plant association changes for admins/system_admins
+        if current_user.id != user_id and not any(
+            role.role in [UserRoleEnum.ADMIN, UserRoleEnum.SYSTEM_ADMIN]
+            for role in current_user.plant_associations
+        ):
+            raise HTTPException(
+                status_code=403, detail="You are not authorized to update this user"
+            )
 
-        db.add(user)
+        # Update general fields
+        for key, value in user_update_request.model_dump(
+            exclude={"plants_and_roles"}
+        ).items():
+            if value is not None:
+                setattr(user, key, value)
+
+        # Update plant associations (if provided)
+        if user_update_request.plants_and_roles:
+            # Admin can only update plants they manage
+            admin_plant_ids = {
+                assoc.plant_id
+                for assoc in current_user.plant_associations
+                if assoc.role in [UserRoleEnum.ADMIN, UserRoleEnum.SYSTEM_ADMIN]
+            }
+
+            # Validate and apply plant association updates
+            for association in user_update_request.plants_and_roles:
+                if association.plant_id not in admin_plant_ids:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You do not have access to manage plant {association.plant_id}",
+                    )
+
+                # Validate plant ID and fetch plant object
+                plant_obj = (
+                    db.query(Plants).filter(Plants.id == association.plant_id).first()
+                )
+                if not plant_obj:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Plant with ID {association.plant_id} not found",
+                    )
+
+                # Check if the association already exists
+                existing_association = next(
+                    (
+                        assoc
+                        for assoc in user.plant_associations
+                        if assoc.plant_id == plant_obj.id
+                    ),
+                    None,
+                )
+                if existing_association:
+                    # Update role if association exists
+                    existing_association.role = association.role
+                else:
+                    # Create a new association
+                    new_association = UserPlantAssociation(
+                        user=user,
+                        plant=plant_obj,
+                        role=association.role,
+                    )
+                    db.add(new_association)
+
+            # Remove associations for plants not in the request
+            user.plant_associations = [
+                assoc
+                for assoc in user.plant_associations
+                if assoc.plant_id
+                in {item.plant_id for item in user_update_request.plants_and_roles}
+            ]
+
         db.commit()
-        db.refresh(user, attribute_names=["roles"])
+        db.refresh(user)
 
-        if not user:
-            raise HTTPException(status_code=404, detail="New User not found")
         return UserBase.model_validate(user)
 
     except Exception as e:
@@ -404,3 +380,36 @@ async def reactivate_user(
         traceback.print_exc()
         print(f"Error occurred while reactivating user: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to reactivate user: {e}")
+
+
+# # TEST ENDPOINT
+# @router.get("/user/{email}", response_model=UserBaseWithRelations)
+# def get_user(email: str, db: Session = Depends(get_session)) -> UserBaseWithRelations:
+#     try:
+#         user = db.query(Users).filter(Users.email == email).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+
+#         plants_and_roles = [
+#             PlantsAndRolesResponse(
+#                 plant=PlantBase.model_validate(association.plant),
+#                 role=association.role,
+#             )
+#             for association in user.plant_associations
+#         ]
+
+#         user_data: UserBaseWithRelations = UserBaseWithRelations(
+#             id=user.id,
+#             user_name=user.user_name,
+#             email=user.email,
+#             global_role=user.global_role,
+#             status=user.status,
+#             created_at=user.created_at,
+#             updated_at=user.updated_at,
+#             plants_and_roles=plants_and_roles,
+#         )
+
+#         return user_data
+#     except Exception as e:
+#         print(f"Error occurred getting user: {e}")
+#         raise HTTPException(status_code=500, detail="Internal Server Error")

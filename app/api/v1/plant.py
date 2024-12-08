@@ -7,50 +7,62 @@ from app.models.items import Items
 from app.models.plants import Plants
 from app.models.qr_codes import QRCodes
 from app.models.users import UserPlantAssociation, Users
-from app.schemas.plant import ManyPlantsRequest, PlantCreate, PlantResponse, PlantUpdate
+from app.schemas.plant import (
+    ManyPlantsRequest,
+    PlantBaseWithRelations,
+    PlantCreateRequest,
+    PlantUpdate,
+)
 from app.services.database_service import get_session
 
 router = APIRouter()
 
 
-@router.post("", response_model=PlantResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/create",
+    response_model=PlantBaseWithRelations,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_plant(
-    plant_create: PlantCreate, db: Session = Depends(get_session)
-) -> PlantResponse:
+    plant_create: PlantCreateRequest, db: Session = Depends(get_session)
+) -> PlantBaseWithRelations:
     try:
-        if not plant_create.users:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Users are required to create a plant.",
-            )
+        # TODO: Should I be adding the System_Admin for when they create a plant?
+        # if not plant_create.users:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="Users are required to create a plant.",
+        #     )
 
         new_plant: Plants = Plants(
             name=plant_create.name,
             image_url=plant_create.image_url,
             location=plant_create.location,
+            requests_sheet_url=plant_create.requests_sheet_url,
         )
 
         db.add(new_plant)
         db.flush()
 
-        for user_assignment in plant_create.users:
-            db_user: Optional[Users] = (
-                db.query(Users).filter(Users.id == user_assignment.user_id).first()
-            )
-            if not db_user:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"User not found: {user_assignment.user_id}",
+        if plant_create.users:
+            for user_assignment in plant_create.users:
+                db_user: Optional[Users] = (
+                    db.query(Users).filter(Users.id == user_assignment.user_id).first()
                 )
+                if not db_user:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"User not found: {user_assignment.user_id}",
+                    )
 
-            association = UserPlantAssociation(
-                user=db_user, plant=new_plant, role=user_assignment.role
-            )
-            db.add(association)  # Add the association to the session
+                association = UserPlantAssociation(
+                    user=db_user, plant=new_plant, role=user_assignment.role
+                )
+                db.add(association)
 
         db.commit()
         db.refresh(new_plant)
-        return PlantResponse.model_validate(new_plant)
+        return PlantBaseWithRelations.model_validate(new_plant)
 
     except HTTPException:
         db.rollback()
@@ -69,35 +81,39 @@ def create_plant(
         ) from e
 
 
-@router.get("/{plant_id}", response_model=PlantResponse, status_code=status.HTTP_200_OK)
-def get_plant(plant_id: int, db: Session = Depends(get_session)) -> PlantResponse:
+@router.get(
+    "/{plant_id}", response_model=PlantBaseWithRelations, status_code=status.HTTP_200_OK
+)
+def get_plant(
+    plant_id: int, db: Session = Depends(get_session)
+) -> PlantBaseWithRelations:
     plant = db.query(Plants).filter(Plants.id == plant_id).first()
     if not plant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found"
         )
-    return PlantResponse.model_validate(plant)
+    return PlantBaseWithRelations.model_validate(plant)
 
 
 # TODO: Add security
 @router.post(
-    "/many", response_model=list[PlantResponse], status_code=status.HTTP_200_OK
+    "/many", response_model=list[PlantBaseWithRelations], status_code=status.HTTP_200_OK
 )
 def get_many_plants(
     plant_ids: ManyPlantsRequest, db: Session = Depends(get_session)
-) -> list[PlantResponse]:
+) -> list[PlantBaseWithRelations]:
     plants = db.query(Plants).filter(Plants.id.in_(plant_ids)).all()
     if not plants:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No plants found"
         )
-    return [PlantResponse.model_validate(plant) for plant in plants]
+    return [PlantBaseWithRelations.model_validate(plant) for plant in plants]
 
 
 # TODO: Add security, and better error handling
 def update_plant(
     plant_id: UUID, plant_update: PlantUpdate, db: Session = Depends(get_session)
-) -> PlantResponse:
+) -> PlantBaseWithRelations:
     try:
         # Retrieve the plant from the database
         db_plant: Optional[Plants] = (
@@ -109,7 +125,7 @@ def update_plant(
             )
 
         # Update scalar fields
-        for field in ["name", "image_url", "location"]:
+        for field in ["name", "image_url", "location", "requests_sheet_url"]:
             value = getattr(plant_update, field, None)
             if value is not None:
                 setattr(db_plant, field, value)
@@ -234,7 +250,7 @@ def update_plant(
 
         db.commit()
         db.refresh(db_plant)
-        return PlantResponse.model_validate(db_plant)
+        return PlantBaseWithRelations.model_validate(db_plant)
 
     except HTTPException:
         # Re-raise HTTPExceptions to be handled by FastAPI

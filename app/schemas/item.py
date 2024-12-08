@@ -22,6 +22,7 @@ class ItemBase(BaseModel):
     # Location information
     in_plant_location: Optional[str] = None
     image_url: Optional[str] = None
+    plant_id: uuid.UUID
 
     # Parts (using SELF for recursive reference)
     parts: Optional[list[Self]]
@@ -32,28 +33,28 @@ class ItemBase(BaseModel):
     updated_at: datetime
 
 
-class ItemWithRelations(ItemBase):
-    suppliers: Optional[list["SupplierWithRelations"]] = None
+class ItemBaseWithRelations(ItemBase):
+    suppliers: Optional[list["SupplierBase"]] = None
     # Item Requests
     item_requests: Optional[list["ItemRequestBase"]] = None
 
 
-class ItemCreate(ItemWithRelations):
+class ItemCreate(ItemBaseWithRelations):
     pass
 
 
-class ItemUpdate(ItemWithRelations):
+class ItemUpdate(ItemBaseWithRelations):
     pass
 
 
-class ItemResponse(ItemWithRelations):
+class ItemResponse(ItemBaseWithRelations):
     pass
 
 
 class ManyItemsResponse(BaseModel):
     total: int
-    items: list[ItemWithRelations]
+    items: list[ItemBaseWithRelations]
 
 
 from app.schemas.item_request import ItemRequestBase
-from app.schemas.supplier import SupplierWithRelations
+from app.schemas.supplier import SupplierBase

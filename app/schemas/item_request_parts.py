@@ -4,11 +4,11 @@ from pydantic import BaseModel
 from app.models.associations import PartRequestUrgencyLevels
 
 
-class PartRequest(BaseModel):
+class PartRequestBase(BaseModel):
     part_id: uuid.UUID
-    part: "ItemWithRelations"
+    part: "ItemBase"
     quantity: int
     urgency_level: PartRequestUrgencyLevels
 
 
-from app.schemas.item import ItemWithRelations
+from app.schemas.item import ItemBase

@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from typing import Optional
 from sqlalchemy import UUID, ForeignKey, String, Enum, DateTime, func
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 from app.services.database_service import Base
@@ -61,6 +61,18 @@ class Users(Base):
     def plants(self) -> list["Plants"]:
         return [association.plant for association in self.plant_associations]
 
+    @property
+    def plants_and_roles(self) -> Optional[list[PlantsAndRolesResponse]]:
+        if not self.plant_associations:
+            return None
+        return [
+            PlantsAndRolesResponse(
+                plant=PlantBase.model_validate(association.plant),
+                role=association.role,
+            )
+            for association in self.plant_associations
+        ]
+
 
 class UserPlantAssociation(Base):
     __tablename__ = "user_plant_association"
@@ -83,3 +95,5 @@ class UserPlantAssociation(Base):
 
 
 from app.models.plants import Plants
+from app.schemas.plant import PlantBase
+from app.schemas.user import PlantsAndRolesResponse

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 from app.models.items import Items, ItemStatusEnum
 from app.schemas.item import (
-    ItemWithRelations,
+    ItemBaseWithRelations,
     ItemCreate,
     ItemResponse,
     ManyItemsResponse,
@@ -39,7 +39,7 @@ def get_many_items(
 
         return ManyItemsResponse(
             total=count,
-            items=[ItemWithRelations.model_validate(i) for i in items],
+            items=[ItemBaseWithRelations.model_validate(i) for i in items],
         )
 
     except Exception as e:

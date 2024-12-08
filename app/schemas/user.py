@@ -55,6 +55,7 @@ class UserUpdate(BaseModel):
     user_name: str
     email: str
     global_role: UserRoleEnum
+    plants_and_roles: Optional[list[PlantsAndRolesCreation]]
 
 
 from app.models.users import UserRoleEnum, UserStatus

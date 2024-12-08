@@ -3,7 +3,6 @@ from typing import Optional
 import uuid
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from app.models.users import UserPlantAssociation
 from app.services.database_service import Base
 from enum import Enum as PyEnum
 from sqlalchemy import String, DateTime, func
@@ -23,11 +22,13 @@ class Plants(Base):
         name: str,
         image_url: Optional[str],
         location: Optional[str],
+        requests_sheet_url: Optional[str],
         user_associations: Optional[list["UserPlantAssociation"]] = None,
     ) -> None:
         self.name = name
         self.image_url = image_url
         self.location = location
+        self.requests_sheet_url = requests_sheet_url
         if user_associations is not None:
             self.user_associations = user_associations
 
@@ -37,6 +38,7 @@ class Plants(Base):
     name = mapped_column(String, nullable=False)
     image_url = mapped_column(String, nullable=True)
     location = mapped_column(String, nullable=True)
+    requests_sheet_url = mapped_column(String, nullable=True)
 
     # Associations
     # One to many relationship with items
@@ -83,7 +85,22 @@ class Plants(Base):
     def users(self) -> list["Users"]:
         return [association.user for association in self.user_associations]
 
+    @property
+    def users_and_roles(self) -> Optional[list[UserAndRole]]:
+        if not self.user_associations:
+            return None
+        return [
+            UserAndRole(
+                user=UserBase.model_validate(association.user),
+                role=association.role,
+            )
+            for association in self.user_associations
+        ]
+
 
 from app.models.items import Items
 from app.models.qr_codes import QRCodes
 from app.models.users import Users
+from app.models.users import UserPlantAssociation
+from app.schemas.plant import UserAndRole
+from app.schemas.user import UserBase

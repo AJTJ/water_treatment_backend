@@ -1,7 +1,7 @@
+from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel
 import uuid
-
 from app.models.qr_codes import QRCodeStatus
 
 
@@ -10,7 +10,10 @@ class QRCodeBase(BaseModel):
     batch_number: int
     full_url: str
     status: QRCodeStatus
-    item_id: Optional[uuid.UUID]
+
+
+class QRCodeBaseWithRelations(QRCodeBase):
+    item: Optional["ItemBase"]
 
 
 class QRCodeUpdate(BaseModel):
@@ -34,3 +37,6 @@ class QRCodeQueryParams(BaseModel):
     limit: int = 200
     min_batch_number: Optional[int] = None
     max_batch_number: Optional[int] = None
+
+
+from app.schemas.item import ItemBase

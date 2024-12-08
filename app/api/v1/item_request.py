@@ -14,7 +14,7 @@ from app.schemas.item_request import (
     ItemRequestResponse,
     ItemRequestUpdate,
     ItemRequestWithItemInfo,
-    ItemRequestWithRelations,
+    ItemRequestBaseWithRelations,
     ManyItemRequestsResponse,
 )
 from app.schemas.failed_sync import FailedSyncCreate
@@ -121,7 +121,7 @@ def get_many_item_requests(
     return ManyItemRequestsResponse(
         total=total,
         item_requests=[
-            ItemRequestWithRelations.model_validate(req) for req in requests
+            ItemRequestBaseWithRelations.model_validate(req) for req in requests
         ],
     )
 

@@ -19,13 +19,13 @@ class ItemRequestBase(BaseModel):
     updated_at: datetime
 
 
-class ItemRequestWithRelations(ItemRequestBase):
+class ItemRequestBaseWithRelations(ItemRequestBase):
     # Associated Equipment
     item_id: Optional[uuid.UUID] = None
-    item: Optional["ItemWithRelations"] = None
+    item: Optional["ItemBase"] = None
 
     # Requested Parts
-    parts: Optional[list[PartRequest]] = None
+    parts: Optional[list[PartRequestBase]] = None
 
 
 class ItemRequestCreate(BaseModel):
@@ -33,28 +33,28 @@ class ItemRequestCreate(BaseModel):
     requestor: Optional[str] = None
     image_url: Optional[str] = None
     item_id: Optional[uuid.UUID] = None
-    parts: Optional[list[PartRequest]] = None
+    parts: Optional[list[PartRequestBase]] = None
 
 
 class ItemRequestUpdate(BaseModel):
     description: Optional[str] = None
     requestor: Optional[str] = None
     image_url: Optional[str]
-    parts: Optional[list[PartRequest]] = None
+    parts: Optional[list[PartRequestBase]] = None
 
 
-class ItemRequestResponse(ItemRequestWithRelations):
+class ItemRequestResponse(ItemRequestBaseWithRelations):
     pass
 
 
-class ItemRequestWithItemInfo(ItemRequestWithRelations):
+class ItemRequestWithItemInfo(ItemRequestBaseWithRelations):
     item_name: Optional[str]
 
 
 class ManyItemRequestsResponse(BaseModel):
     total: int
-    item_requests: list[ItemRequestWithRelations]
+    item_requests: list[ItemRequestBaseWithRelations]
 
 
-from app.schemas.item_request_parts import PartRequest
-from app.schemas.item import ItemWithRelations
+from app.schemas.item_request_parts import PartRequestBase
+from app.schemas.item import ItemBase

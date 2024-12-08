@@ -10,6 +10,7 @@ class PlantBase(BaseModel):
     name: str
     image_url: Optional[str]
     location: Optional[str]
+    requests_sheet_url: Optional[str]
 
     # Metadata
     status: PlantStatus
@@ -17,43 +18,23 @@ class PlantBase(BaseModel):
     updated_at: datetime
 
 
-class PlantWithRelations(PlantBase):
+class PlantBaseWithRelations(PlantBase):
     items: list["ItemBase"]
-    user_associations: list["UserPlantAssociation"]
+    users_and_roles: list[UserAndRole]
     qr_codes: list["QRCodeBase"]
 
 
-class PlantCreate(BaseModel):
+class PlantCreateRequest(BaseModel):
     name: str
     image_url: Optional[str]
     location: Optional[str]
-    users: list[UserRoleAssignment]
+    requests_sheet_url: Optional[str]
+    users: Optional[list[UserRoleAssignment]]
 
 
-class PlantUpdate(BaseModel):
-    name: Optional[str]
-    image_url: Optional[str]
-    location: Optional[str]
-    users_to_add: list[UserRoleAssignment]
-    users_to_remove: list[str]
-    items_to_add: list[uuid.UUID]
-    items_to_remove: list[uuid.UUID]
-    qr_codes_to_add: list[uuid.UUID]
-    qr_codes_to_remove: list[uuid.UUID]
-
-
-class UserInPlant(BaseModel):
-    user_id: str
-    user_name: str
+class UserAndRole(BaseModel):
+    user: "UserBase"
     role: UserRoleEnum
-
-
-class PlantResponse(BaseModel):
-    pass
-
-
-class ManyPlantsRequest(BaseModel):
-    plant_ids: list[uuid.UUID]
 
 
 class UserRoleAssignment(BaseModel):
@@ -61,7 +42,24 @@ class UserRoleAssignment(BaseModel):
     role: UserRoleEnum
 
 
+class PlantUpdate(BaseModel):
+    name: Optional[str]
+    image_url: Optional[str]
+    location: Optional[str]
+    users_to_add: Optional[list[UserRoleAssignment]]
+    users_to_remove: Optional[list[str]]
+    items_to_add: Optional[list[uuid.UUID]]
+    items_to_remove: Optional[list[uuid.UUID]]
+    qr_codes_to_add: Optional[list[uuid.UUID]]
+    qr_codes_to_remove: Optional[list[uuid.UUID]]
+
+
+class ManyPlantsRequest(BaseModel):
+    plant_ids: list[uuid.UUID]
+
+
 from app.models.plants import PlantStatus
 from app.schemas.qr_code import QRCodeBase
 from app.schemas.item import ItemBase
-from app.models.users import UserPlantAssociation, UserRoleEnum
+from app.models.users import UserRoleEnum
+from app.schemas.user import UserBase
